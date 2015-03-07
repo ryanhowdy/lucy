@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Lucy Installation - Step Two</title>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Lucy - Install">
+<meta name="author" content="Ryan Haudenschilt">
+<script src="vendor/components/jquery/jquery.min.js"></script>
+<script src="vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="vendor/twbs/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="templates/install/css/style.css">
+</head>
+<body>
+    <div class="container page-title">
+        <h3>Lucy Installation</h3>
+    </div>
+
+    <div class="container header">
+        <div class="jumbotron">
+            <h1>Site Details</h1>
+        </div>
+        <ul class="nav nav-pills">
+            <li role="presentation" class="inactive">
+                <div><span class="badge">1</span> Database</div>
+            </li>
+            <li role="presentation" class="active">
+                <div><span class="badge">2</span> Site Details</div>
+            </li>
+            <li role="presentation">
+                <div><span class="badge">3</span> Account</div>
+            </li>
+            <li role="presentation" class="pull-right">
+                <a id="next" href="#">
+                    Next <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="container main-container">
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Website Details</div>
+            <div class="panel-body">
+
+                <form role="form" id="site-form" action="install.php?step=2" method="post">
+                    <input type="hidden" name="site-information" value="1"/>
+
+                    <p>
+                        Now please tell us more about the super awesome Open Source project you are developing.
+                    </p>
+
+                {% if form_errors is defined %}
+                    <div class="alert alert-danger">
+                    {% for error in form_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+
+                    <div class="form-group {{ name_error }}">
+                        <label for="name">Website Name</label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="My Super Awesome jQuery Plugin" value="{{ name }}">
+                    </div>
+                    <div class="form-group {{ source_code_error }}">
+                        <label for="name">Source Code</label>
+                        <input type="text" class="form-control" id="source_code" name="source_code" placeholder="https://github.com/ryanhowdy/lucy.git" value="{{ source_code }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Include Modules</label>
+                        <div class="checkbox disabled">
+                            <label>
+                                <input checked disabled type="checkbox" value="ticket"> Tickets
+                            </label>
+                        </div>
+                        <div class="checkbox disabled">
+                            <label>
+                                <input checked disabled type="checkbox" value=""> Discussions
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" value=""> Source Code
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" value=""> Knowledge Base
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" value=""> Wiki
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" value=""> Downloads
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" value=""> Translations
+                            </label>
+                        </div>
+                    </div>
+                </form>
+
+            </div><!--/.panel-body-->
+        </div><!--/.panel .panel-default-->
+
+        <script>
+        $('#next').click(function(e) {
+            e.preventDefault();
+            $('#site-form').submit();
+        });
+        </script>
+
+        <div class="footer">
+            <p>&copy; Haudenschilt LLC 2014</p>
+        </div>
+
+    </div> <!-- /container -->
+</body>
+</html>

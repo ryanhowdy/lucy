@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Lucy Installation - Step Three</title>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Lucy - Install">
+<meta name="author" content="Ryan Haudenschilt">
+<script src="vendor/components/jquery/jquery.min.js"></script>
+<script src="vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="vendor/twbs/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="templates/install/css/style.css">
+</head>
+<body>
+    <div class="container page-title">
+        <h3>Lucy Installation</h3>
+    </div>
+
+    <div class="container header">
+        <div class="jumbotron">
+            <h1>Account</h1>
+        </div>
+        <ul class="nav nav-pills">
+            <li role="presentation" class="inactive">
+                <div><span class="badge">1</span> Database</div>
+            </li>
+            <li role="presentation" class="inactive">
+                <div><span class="badge">2</span> Site Details</div>
+            </li>
+            <li role="presentation" class="active">
+                <div><span class="badge">3</span> Account</div>
+            </li>
+            <li role="presentation" class="pull-right">
+                <a id="finish" href="#">Finish</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="container main-container">
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Account</div>
+            <div class="panel-body">
+
+                <form role="form" id="account-form" action="install.php?step=3" method="post">
+                    <input type="hidden" name="account-information" value="1"/>
+
+                    <p>
+                        Please create an administrator account.
+                    </p>
+
+                {% if form_errors is defined %}
+                    <div class="alert alert-danger">
+                    {% for error in form_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+
+                    <div class="form-group {{ name_error }}">
+                        <label for="name">Display Name</label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="Bob Smith or L33t_H@x0r, or whatever you want to be called" value="{{ name }}">
+                    </div>
+                    <div class="form-group {{ source_code_error }}">
+                        <label for="name">Source Code Username</label>
+                        <input type="text" class="form-control" id="source_code" name="source_code" placeholder="The username/email you used to commit code" value="{{ source_code }}">
+                    </div>
+                    <div class="form-group {{ email_error }}">
+                        <label for="email">Email</label>
+                        <input type="text" class="form-control" id="email" name="email" placeholder="bob@email.com" value="{{ email }}">
+                    </div>
+                    <div class="form-group {{ password_error }}">
+                        <label for="password" class="control-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" value="{{ password }}">
+                    </div>
+                </form>
+
+            </div><!--/.panel-body-->
+        </div><!--/.panel .panel-default-->
+
+        <script>
+        $('#finish').click(function(e) {
+            e.preventDefault();
+            $('#account-form').submit();
+        });
+        </script>
+
+        <div class="footer">
+            <p>&copy; Haudenschilt LLC 2014</p>
+        </div>
+
+    </div> <!-- /container -->
+</body>
+</html>
+

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Checking Requirements - Lucy Installation</title>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Lucy - Install">
+<meta name="author" content="Ryan Haudenschilt">
+<script src="vendor/components/jquery/jquery.min.js"></script>
+<script src="vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="vendor/twbs/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="templates/install/css/style.css">
+</head>
+<body>
+    <div class="container page-title">
+        <h3>Lucy Installation</h3>
+    </div>
+
+    <div class="container header">
+        <div class="jumbotron">
+            <h1>Checking Requirements</h1>
+            <p class="lead">{{ message }}</p>
+        </div>
+        {% if install_ok is defined %}
+        <ul class="nav nav-pills">
+            <li role="presentation" class="pull-right"><a href="install.php?step=1">Start Installation</a></li>
+        </ul>
+        {% endif %}
+    </div>
+
+    <div class="container main-container">
+
+        <ul class="list-group">
+            {% for req in requirements %}
+            <li class="list-group-item">
+                <h4 class="list-group-item-heading">
+                    <span class="label label-{{ req.label_type }}">{{ req.label }}</span>
+                    {{ req.name }}
+                </h4>
+                <p class="list-group-item-text">{{ req.text }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <div class="footer">
+            <p>&copy; Haudenschilt LLC 2014</p>
+        </div>
+
+    </div> <!-- /container -->
+</body>
+</html>

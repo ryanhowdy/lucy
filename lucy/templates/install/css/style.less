@@ -1,0 +1,116 @@
+@green      : #79b933;
+@light-blue : #bde0ff;
+@blue       : #388cba;
+@gray       : #333;
+@orange     : #ff7400;
+
+body {
+    background-color: @gray;
+}
+.container {
+    width: 750px;
+}
+.footer {
+    clear: both;
+    color: #bbb;
+    padding-top: 20px;
+}
+
+.page-title > h3 {
+    color: #b3b3b3;
+}
+
+.header {
+    padding: 0;
+
+    > .jumbotron {
+        background-color: @blue;
+        border-radius: 0;
+        color: #fff;
+        margin: 0;
+
+        .btn {
+            background-color: #444;
+            border-color: #444;
+        }
+    }
+
+    > .nav {
+        background-color: @blue;
+
+        > li {
+            margin: 0;
+
+            > a,
+            > div {
+                background-color: #444;
+                border-radius: 0;
+                color: #b8b8b8;
+                font: bold 12px/160% Arial, Helvetica, sans-serif;
+                padding: 15px;
+
+                &:hover {
+                    background-color: #333;
+                    color: #fff;
+                }
+            }
+            &.active {
+                > a,
+                > div {
+                    background-color: #fff;
+                    color: #333;
+
+                    > .badge {
+                        background-color: @blue;
+                    }
+
+                    &:hover {
+                        background-color: #fff;
+                        color: #333;
+                    }
+                }
+            }
+            &.inactive {
+                > a,
+                > div {
+                    background-color: #999;
+                    text-decoration: line-through;
+                }
+            }
+            &.pull-right {
+                > a,
+                > div {
+                    background-color: @green;
+                    color: #000;
+
+                    &:hover {
+                        color: #fff;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.main-container {
+    background-color: #fff;
+    padding: 15px;
+}
+
+.list-group {
+
+    > .list-group-item {
+        padding: 20px 15px;
+
+        > .list-group-item-heading {
+            margin-bottom: 15px;
+        }
+    }
+}
+
+.label-success {
+    background-color: @green;
+}
+.label-almost-success {
+    background-color: lighten(@green, 10%);
+}

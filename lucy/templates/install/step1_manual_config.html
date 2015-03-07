@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Lucy Installation - Manual Config</title>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Lucy - Install">
+<meta name="author" content="Ryan Haudenschilt">
+<script src="vendor/components/jquery/jquery.min.js"></script>
+<script src="vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="vendor/twbs/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="templates/install/css/style.css">
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+    <div class="container page-title">
+        <h3>Lucy Installation</h3>
+    </div>
+
+    <div class="container header">
+        <div class="jumbotron">
+            <h1>Database</h1>
+        </div>
+        <ul class="nav nav-pills">
+            <li role="presentation" class="active">
+                <div><span class="badge">1</span> Database</div>
+            </li>
+            <li role="presentation">
+                <div><span class="badge">2</span> Site Details</div>
+            </li>
+            <li role="presentation">
+                <div><span class="badge">3</span> Account</div>
+            </li>
+            <li role="presentation" class="pull-right">
+                <a href="install.php?step=check-config">
+                    Next <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="container main-container">
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Manual Config</div>
+            <div class="panel-body">
+
+            {% if errors is defined %}
+                <div class="alert alert-danger">
+                {% for error in errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+                </div>
+            {% else %}
+                <p class="alert alert-info"><strong>Bummer</strong> The config file cannot be created automatically.</p>
+            {% endif %}
+                <p>Please create a new file <code>config.php</code> and copy the following code into it.</p>
+                <p>Once the file has been created, please click <strong>Next</strong> below.</p>
+                <pre class="prettyprint">{{ config }}</pre>
+
+            </div><!--/.panel-body-->
+        </div><!--/.panel .panel-default-->
+
+        <div class="footer">
+            <p>&copy; Haudenschilt LLC 2014</p>
+        </div>
+
+    </div> <!-- /container -->
+</body>
+</html>

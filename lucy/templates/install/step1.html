@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Lucy Installation - Step One</title>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Lucy - Install">
+<meta name="author" content="Ryan Haudenschilt">
+<script src="vendor/components/jquery/jquery.min.js"></script>
+<script src="vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="vendor/twbs/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="templates/install/css/style.css">
+</head>
+<body>
+    <div class="container page-title">
+        <h3>Lucy Installation</h3>
+    </div>
+
+    <div class="container header">
+        <div class="jumbotron">
+            <h1>Database</h1>
+        </div>
+        <ul class="nav nav-pills">
+            <li role="presentation" class="active">
+                <div><span class="badge">1</span> Database</div>
+            </li>
+            <li role="presentation">
+                <div><span class="badge">2</span> Site Details</div>
+            </li>
+            <li role="presentation">
+                <div><span class="badge">3</span> Account</div>
+            </li>
+            <li role="presentation" class="pull-right">
+                <a id="next" href="#">
+                    Next <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="container main-container">
+
+        <form role="form" id="db-form" action="install.php?step=1" method="post">
+            <input type="hidden" name="database-information" value="1"/>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">Database Information</div>
+                <div class="panel-body">
+
+                    {% if form_errors is defined %}
+                        <div class="alert alert-danger">
+                        {% for error in form_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="form-group {{ database_error }}">
+                        <label for="database" class="control-label">Database</label>
+                        <input type="text" class="form-control" id="database" name="database" placeholder="Database" value="{{ database }}">
+                    </div>
+                    <div class="form-group {{ username_error }}">
+                        <label for="username" class="control-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Username" value="{{ username }}">
+                    </div>
+                    <div class="form-group {{ password_error }}">
+                        <label for="password" class="control-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" value="{{ password }}">
+                    </div>
+
+                </div><!--/.panel-body-->
+            </div><!--/.panel .panel-default-->
+
+<!--
+TODO
+            <p class="text-center"><a href="#" onclick="$('#advanced').toggle(); return false;">Advanced Settings</a></p>
+
+            <div id="advanced" class="panel panel-default" style="display:none">
+                <div class="panel-heading">Advanced Settings</div>
+                <div class="panel-body">
+                    <p class="alert alert-info">
+                        <strong>Note:</strong> The following fields should be unchanged on most servers.  Only change if you know what you are doing.
+                    </p>
+                    <div class="form-group">
+                        <label for="host">Host</label>
+                        <input type="text" class="form-control" id="host" value="localhost">
+                    </div>
+                    <div class="form-group">
+                        <label for="driver">Database Type</label>
+                        <select id="driver" class="form-control">
+                          <option selected>MySQL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="prefix">Prefix</label>
+                        <input type="text" class="form-control" id="prefix" value="lu_">
+                    </div>
+                </div>
+            </div>
+
+            <a href="#" id="test-db-connection" class="btn btn-default pull-right">Test Connection</a>
+-->
+
+        </form>
+
+        <script>
+        $('#next').click(function(e) {
+            e.preventDefault();
+            $('#db-form').submit();
+        });
+        </script>
+
+        <div class="footer">
+            <p>&copy; Haudenschilt LLC 2014</p>
+        </div>
+
+    </div> <!-- /container -->
+</body>
+</html>

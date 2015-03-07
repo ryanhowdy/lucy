@@ -1,0 +1,90 @@
+body {
+  background-color: #333333;
+}
+.container {
+  width: 750px;
+}
+.footer {
+  clear: both;
+  color: #bbb;
+  padding-top: 20px;
+}
+.page-title > h3 {
+  color: #b3b3b3;
+}
+.header {
+  padding: 0;
+}
+.header > .jumbotron {
+  background-color: #388cba;
+  border-radius: 0;
+  color: #fff;
+  margin: 0;
+}
+.header > .jumbotron .btn {
+  background-color: #444;
+  border-color: #444;
+}
+.header > .nav {
+  background-color: #388cba;
+}
+.header > .nav > li {
+  margin: 0;
+}
+.header > .nav > li > a,
+.header > .nav > li > div {
+  background-color: #444;
+  border-radius: 0;
+  color: #b8b8b8;
+  font: bold 12px/160% Arial, Helvetica, sans-serif;
+  padding: 15px;
+}
+.header > .nav > li > a:hover,
+.header > .nav > li > div:hover {
+  background-color: #333;
+  color: #fff;
+}
+.header > .nav > li.active > a,
+.header > .nav > li.active > div {
+  background-color: #fff;
+  color: #333;
+}
+.header > .nav > li.active > a > .badge,
+.header > .nav > li.active > div > .badge {
+  background-color: #388cba;
+}
+.header > .nav > li.active > a:hover,
+.header > .nav > li.active > div:hover {
+  background-color: #fff;
+  color: #333;
+}
+.header > .nav > li.inactive > a,
+.header > .nav > li.inactive > div {
+  background-color: #999;
+  text-decoration: line-through;
+}
+.header > .nav > li.pull-right > a,
+.header > .nav > li.pull-right > div {
+  background-color: #79b933;
+  color: #000;
+}
+.header > .nav > li.pull-right > a:hover,
+.header > .nav > li.pull-right > div:hover {
+  color: #fff;
+}
+.main-container {
+  background-color: #fff;
+  padding: 15px;
+}
+.list-group > .list-group-item {
+  padding: 20px 15px;
+}
+.list-group > .list-group-item > .list-group-item-heading {
+  margin-bottom: 15px;
+}
+.label-success {
+  background-color: #79b933;
+}
+.label-almost-success {
+  background-color: #92cf50;
+}
