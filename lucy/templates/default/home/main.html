@@ -1,0 +1,16 @@
+
+    <div class="container main-container">
+
+    {% if logged_in is defined %}
+        <h2>Welcome back, {{ username }}</h2>
+    {% else %}
+        <h2>Please login.</h2>
+    {% endif %}
+
+        <div class="footer">
+            <p>&copy; Haudenschilt LLC 2014</p>
+        </div>
+
+    </div> <!--/.container .main-container-->
+</body>
+</html>

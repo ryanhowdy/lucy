@@ -708,6 +708,7 @@ define('DEBUG',         false);";
             // Drop Tables
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."user_activity`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."user`");
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."module`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."config`");
 
             // Create New Tables
@@ -727,6 +728,37 @@ define('DEBUG',         false);";
                 'source_code_url' => $_SESSION['form_values']['source_code'],
             ));
             $config->save();
+
+            // Modules
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."module` (
+                    `id`                    INT NOT NULL AUTO_INCREMENT, 
+                    `name`                  VARCHAR(255) NOT NULL,
+                    `code`                  VARCHAR(20) NOT NULL,
+                    `order`                 TINYINT(2) NOT NULL,
+                    PRIMARY KEY (`id`), 
+                    UNIQUE KEY `code` (`code`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+            );
+
+            $i = 1;
+            $modulesToInstall = array();
+            foreach ($_SESSION['form_values']['modules'] as $k => $code)
+            {
+                $name = str_replace('_', ' ', $code);
+                $name = ucwords($name);
+
+                $module = ORM::forTable(DB_PREFIX.'module')->create();
+
+                $module->set(array(
+                    'name'  => $name,
+                    'code'  => $code,
+                    'order' => $i,
+                ));
+                $module->save();
+
+                $i++;
+            }
 
             // User
             $db->exec("

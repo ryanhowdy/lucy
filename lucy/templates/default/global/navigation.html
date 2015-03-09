@@ -1,0 +1,22 @@
+
+    <div class="container header">
+        <div class="jumbotron">
+            <h1>{{ page_title }}</h1>
+        </div>
+        <ul class="nav nav-pills">
+            {% for link in links %}
+            <li role="presentation" class="{{ link.status }}">
+                <a href="{{ link.url }}">{{ link.name }}</a>
+            </li>
+            {% endfor %}
+            {% if logged_in is defined %}
+            <li role="presentation" class="pull-right">
+                <a href="logout.php">Logout</a>
+            </li>
+            {% else %}
+            <li role="presentation" class="pull-right">
+                <a href="login.php">Login</a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
