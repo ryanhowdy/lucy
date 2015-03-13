@@ -21,7 +21,7 @@ class Page
      */
     public function __construct ($currentPage)
     {
-        $this->lucyError = Lucy_Error::getInstance();
+        $this->lucyError = Error::getInstance();
 
         // Ensure that the site has been installed first
         if (!file_exists('config.php'))
@@ -39,6 +39,7 @@ class Page
 
         $this->pageLkup = array(
             'dashboard' => _('Dashboard'),
+            'login'     => _('Login'),
         );
     }
 
@@ -79,8 +80,7 @@ class Page
             return false;
         }
 
-        // Display the header
-        $this->displayTemplate('global', 'header', array(
+        $params = array(
             'language'      => 'en',
             'site_title'    => $config->name,
             'page_title'    => $this->pageLkup[$this->currentPage],
@@ -88,7 +88,16 @@ class Page
             'js_code'       => '',
             'css_includes'  => '',
             'links'         => $links,
-        ));
+        );
+
+        $user = new User();
+        if ($user->isLoggedIn())
+        {
+            $params['logged_in'] = $user->name;
+        }
+
+        // Display the header
+        $this->displayTemplate('global', 'header', $params);
 
         return true;
     }

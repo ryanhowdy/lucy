@@ -6,8 +6,6 @@ require_once __DIR__.'/vendor/autoload.php';
 require_once __DIR__.'/config.php';
 require_once __DIR__.'/lib/Error.php';
 
-$lucyError = Lucy_Error::getInstance();
-
 $control = new DashboardController();
 $control->run();
 exit();
@@ -22,6 +20,9 @@ exit();
  */
 class DashboardController
 {
+    private $error;
+    private $user;
+
     /**
      * run 
      * 
@@ -29,6 +30,9 @@ class DashboardController
      */
     function run ()
     {
+        $this->error = Error::getInstance();
+        $this->user  = new User();
+
         $this->displayDashboard();
     }
 
@@ -41,21 +45,19 @@ class DashboardController
      */
     function displayDashboard ()
     {
-        $lucyError = Lucy_Error::getInstance();
-
         $page = new Page('dashboard');
 
         $page->displayHeader();
-        if ($lucyError->hasError())
+        if ($this->error->hasError())
         {
-            $lucyError->displayError();
+            $this->error->displayError();
             return;
         }
 
         $page->displayTemplate('home', 'main');
-        if ($lucyError->hasError())
+        if ($this->error->hasError())
         {
-            $lucyError->displayError();
+            $this->error->displayError();
             return;
         }
 

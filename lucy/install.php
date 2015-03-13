@@ -671,6 +671,7 @@ define('DEBUG',         false);";
             'source_code_username' => $_SESSION['form_values']['source_code'],
             'email'                => $_SESSION['form_values']['email'],
             'password'             => $password,
+            'activated'            => 1,
         ));
         $user->set_expr('updated', 'UTC_TIMESTAMP()');
         $user->set_expr('created', 'UTC_TIMESTAMP()');

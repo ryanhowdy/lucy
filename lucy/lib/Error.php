@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Lucy_Error
+ * Error
  * 
  * @package   Lucy
- * @copyright 2014 Haudenschilt LLC
+ * @copyright 2015 Haudenschilt LLC
  * @author    Ryan Haudenschilt <r.haudenschilt@gmail.com> 
  * @license   http://www.gnu.org/licenses/gpl-2.0.html
  */
-class Lucy_Error
+class Error
 {
     private $errorList = array();
 
@@ -30,7 +30,7 @@ class Lucy_Error
     {
         if (!isset(self::$instance))
         {
-            self::$instance = new Lucy_Error();
+            self::$instance = new Error();
         }
 
         return self::$instance;

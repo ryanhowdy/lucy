@@ -1,0 +1,63 @@
+
+    <div class="container-fluid main-container">
+
+    {% if logged_in is defined %}
+        <h2>You are already logged in.</h2>
+    {% else %}
+        <div id="login-overlay" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">Please Login</h4>
+                </div><!--/.modal-header-->
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xs-6">
+                        {% if error is defined %}
+                            <div class="alert alert-danger">
+                                <p>{{ error }}</p>
+                            </div>
+                        {% endif %}
+                            <div class="well">
+                                <form id="login-form" method="POST" action="login.php" novalidate="novalidate">
+                                    <div class="form-group">
+                                        <label for="email" class="control-label">Email</label>
+                                        <input type="text" class="form-control" id="email" name="email" value="{{ email }}" title="Please enter you email" placeholder="example@gmail.com">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="password" class="control-label">Password</label>
+                                        <input type="password" class="form-control" id="password" name="password" title="Please enter your password">
+                                    </div>
+                                    <div class="checkbox">
+                                        <label><input type="checkbox" name="remember" id="remember">Remember login</label>
+                                    </div>
+                                    <p>
+                                        <button type="submit" class="btn btn-success btn-block">Login</button>
+                                    </p>
+                                    <a href="#" class="">Lost Passowrd</a>
+                                </form>
+                            </div>
+                        </div><!--/.col-xs-6-->
+                        <div class="col-xs-6">
+                            <p class="lead">Or, register and help out</p>
+                            <ul class="list-unstyled" style="line-height: 2">
+                                <li><span class="glyphicon glyphicon-ok"></span> Improve the project</li>
+                                <li><span class="glyphicon glyphicon-ok"></span> Add new functionality</li>
+                                <li><span class="glyphicon glyphicon-ok"></span> Be a pare of the community</li>
+                                <li><span class="glyphicon glyphicon-ok"></span> Earn badges</li>
+                                <li><span class="glyphicon glyphicon-ok"></span> Have fun!</li>
+                            </ul>
+                            <p><a href="register.php" class="btn btn-info btn-block">Register</a></p>
+                        </div><!--/.col-xs-6-->
+                    </div><!--/.row-->
+                </div><!--/.modal-body-->
+            </div><!--/.modal-content-->
+        </div>
+    {% endif %}
+
+        <div class="footer">
+            <p>&copy; Haudenschilt LLC 2015</p>
+        </div>
+
+    </div> <!--/.container-fluid .main-container-->
+</body>
+</html>
