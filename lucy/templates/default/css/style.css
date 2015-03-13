@@ -43,10 +43,21 @@ body {
   color: #333;
 }
 .header > .nav > li.pull-right > a {
+  background-color: #333;
+  color: #b8b8b8;
+}
+.header > .nav > li.pull-right > a:hover {
+  background-color: #222;
+  color: #fff;
+}
+.header > .nav > li.login > a,
+.header > .nav > li.logout > a {
   background-color: #79b933;
   color: #000;
 }
-.header > .nav > li.pull-right > a:hover {
+.header > .nav > li.login > a:hover,
+.header > .nav > li.logout > a:hover {
+  background-color: #79b933;
   color: #fff;
 }
 .main-container {
