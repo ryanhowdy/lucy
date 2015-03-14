@@ -652,9 +652,6 @@ define('DEBUG',         false);";
 
         require_once 'config.php';
 
-        // bootstrap.php would normally do this, but not during install
-        // because the config.php (which holds the db data) wasn't 
-        // included until afterwards
         ORM::configure(DB_CONNECTION);
         ORM::configure('username', DB_USERNAME);
         ORM::configure('password', DB_PASSWORD);
@@ -679,9 +676,48 @@ define('DEBUG',         false);";
 
         $userId = $user->id();
 
-        $user_activity = ORM::forTable(DB_PREFIX.'user_activity')->create();
-        $user_activity->set(array('user_id' => $userId));
-        $user_activity->save();
+        $userActivity = ORM::forTable(DB_PREFIX.'user_activity')->create();
+        $userActivity->set(array('user_id' => $userId));
+        $userActivity->save();
+
+        // Insert the default ticket statuses
+        $defaultStatuses = array(
+            'New',
+            'Assigned',
+            'Started',
+            'Resolved',
+            'Reassigned',
+            'Rejected',
+            'Reopened',
+        );
+
+        foreach ($defaultStatuses as $status)
+        {
+            $ticketStatus = ORM::forTable(DB_PREFIX.'ticket_status')->create();
+
+            $ticketStatus->set(array(
+                'name'       => $status,
+                'created_id' => $userId,
+                'updated_id' => $userId,
+            ));
+            $ticketStatus->set_expr('updated', 'UTC_TIMESTAMP()');
+            $ticketStatus->set_expr('created', 'UTC_TIMESTAMP()');
+            $ticketStatus->save();
+        }
+
+        // Insert default milestone
+        $ticketMilestone = ORM::forTable(DB_PREFIX.'ticket_milestone')->create();
+
+        $ticketMilestone->set(array(
+            'name'        => 'Major Milestone',
+            'description' => 'This milestone is due in 5 weeks.  Better get started.',
+            'due'         => gmdate('Y-m-d', strtotime('+5 weeks')),
+            'created_id'  => $userId,
+            'updated_id'  => $userId,
+        ));
+        $ticketMilestone->set_expr('updated', 'UTC_TIMESTAMP()');
+        $ticketMilestone->set_expr('created', 'UTC_TIMESTAMP()');
+        $ticketMilestone->save();
 
         // Account created
         $_SESSION['account_created'] = 1;
@@ -707,12 +743,23 @@ define('DEBUG',         false);";
         try
         {
             // Drop Tables
+            //------------------------------------
+
+            // Tables with user + other foreign keys
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_status`");
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_milestone`");
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket`");
+
+            // Tables with user foreign keys
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."user_activity`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."user`");
+
+            // No foreign key tables
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."module`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."config`");
 
             // Create New Tables
+            //------------------------------------
 
             // Config
             $db->exec("
@@ -795,7 +842,63 @@ define('DEBUG',         false);";
                     `tickets`               INT NOT NULL DEFAULT 0,                             # tickets opened or closed
                     `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
                     PRIMARY KEY (`id`), 
-                    FOREIGN KEY (`user_id`) REFERENCES `".DB_PREFIX."user`(`id`) ON DELETE CASCADE
+                    FOREIGN KEY (`user_id`) REFERENCES `".DB_PREFIX."user`(`id`)
+                ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
+            );
+
+            // Tickets
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ticket` (
+                    `id`                    INT NOT NULL AUTO_INCREMENT, 
+                    `name`                  VARCHAR(255) NOT NULL, 
+                    `description`           TEXT NOT NULL,
+                    `assigned_id`           INT NULL,
+                    `status`                INT NULL,
+                    `milestone`             INT NULL,
+                    `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `created_id`            INT NULL,
+                    `created_name`          VARCHAR(255) NULL,
+                    `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+                    `updated_id`            INT NULL,
+                    `updated_name`          VARCHAR(255) NULL,
+                    PRIMARY KEY (`id`), 
+                    FOREIGN KEY (`assigned_id`) REFERENCES `".DB_PREFIX."user`(`id`),
+                    FOREIGN KEY (`created_id`)  REFERENCES `".DB_PREFIX."user`(`id`),
+                    FOREIGN KEY (`updated_id`)  REFERENCES `".DB_PREFIX."user`(`id`)
+                ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
+            );
+
+            // Ticket Statuses
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ticket_status` (
+                    `id`                    INT NOT NULL AUTO_INCREMENT, 
+                    `name`                  VARCHAR(80) NOT NULL, 
+                    `color`                 CHAR(6) NOT NULL DEFAULT 'dddddd',
+                    `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `created_id`            INT NOT NULL,
+                    `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+                    `updated_id`            INT NOT NULL,
+                    PRIMARY KEY (`id`),
+                    FOREIGN KEY (`created_id`)  REFERENCES `".DB_PREFIX."user`(`id`),
+                    FOREIGN KEY (`updated_id`)  REFERENCES `".DB_PREFIX."user`(`id`)
+                ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
+            );
+
+            // Ticket Milestone
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ticket_milestone` (
+                    `id`                    INT NOT NULL AUTO_INCREMENT, 
+                    `name`                  VARCHAR(80) NOT NULL, 
+                    `description`           TEXT NOT NULL,
+                    `due`                   DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `complete`              DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `created_id`            INT NOT NULL,
+                    `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+                    `updated_id`            INT NOT NULL,
+                    PRIMARY KEY (`id`),
+                    FOREIGN KEY (`created_id`)  REFERENCES `".DB_PREFIX."user`(`id`),
+                    FOREIGN KEY (`updated_id`)  REFERENCES `".DB_PREFIX."user`(`id`)
                 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
             );
         }
