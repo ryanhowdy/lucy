@@ -201,4 +201,29 @@ class User
 
         return true;
     }
+
+    /**
+     * getArray 
+     * 
+     * Will return the logged in user data as an array.
+     * 
+     * @return array
+     */
+    public function getArray ()
+    {
+        return array(
+            'id'                    => $this->id,
+            'name'                  => $this->name,
+            'source_code_username'  => $this->source_code_username,
+            'email'                 => $this->email,
+            'birthday'              => $this->birthday,
+            'timezone'              => $this->timezone,
+            'language'              => $this->language,
+            'activated'             => $this->activated,
+            'login_attempts'        => $this->login_attempts,
+            'locked'                => $this->locked,
+            'created'               => $this->created,
+            'updated'               => $this->updated,
+        );
+    }
 }

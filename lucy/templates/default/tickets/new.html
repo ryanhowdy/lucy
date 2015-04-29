@@ -1,0 +1,51 @@
+
+    <div class="container-fluid main-container">
+
+        {% if form_errors|length > 0 %}
+        <div class="alert alert-danger" role="alert">
+            <p><strong>{{ form_errors.title }}</strong></p>
+            {% for error in form_errors.errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form id="new-ticket" name="new-ticket" action="tickets.php?new" method="post">
+            <div class="row">
+                <div class="col-sm-8">
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <input type="text" class="form-control" id="subject" name="subject" placeholder="A short summary of the ticket">
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="A long detailed description"></textarea>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label for="assigned_id">Assignee</label>
+                        <select class="form-control" id="assigned_id" name="assigned_id">
+                            <option></option>
+                        {% for assignee in assignees %}
+                            <option id="{{ assignee.id }}">{{ assignee.label }}</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="milestone">{{ milestone_label }}</label>
+                        <select class="form-control" id="milestone" name="milestone">
+                            <option></option>
+                        {% for milestone in milestones %}
+                            <option id="{{ milestone.id }}">{{ milestone.label }}</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div><!--/.row-->
+            <input type="hidden" name="user_id" value="{{ user_id }}"/>
+            <input type="hidden" name="submit" value="1"/>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+
+    </div> <!--/.container-fluid .main-container-->

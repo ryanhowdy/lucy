@@ -850,17 +850,15 @@ define('DEBUG',         false);";
             $db->exec("
                 CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ticket` (
                     `id`                    INT NOT NULL AUTO_INCREMENT, 
-                    `name`                  VARCHAR(255) NOT NULL, 
+                    `subject`               VARCHAR(255) NOT NULL, 
                     `description`           TEXT NOT NULL,
                     `assigned_id`           INT NULL,
                     `status`                INT NULL,
                     `milestone`             INT NULL,
                     `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
                     `created_id`            INT NULL,
-                    `created_name`          VARCHAR(255) NULL,
                     `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
                     `updated_id`            INT NULL,
-                    `updated_name`          VARCHAR(255) NULL,
                     PRIMARY KEY (`id`), 
                     FOREIGN KEY (`assigned_id`) REFERENCES `".DB_PREFIX."user`(`id`),
                     FOREIGN KEY (`created_id`)  REFERENCES `".DB_PREFIX."user`(`id`),

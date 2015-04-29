@@ -1,0 +1,39 @@
+
+    <div class="container-fluid main-container">
+
+        <p>
+            <a href="?new" class="btn btn-lg btn-primary">{{ new_label }}</a>
+        </p>
+
+    {% if tickets|length > 0 %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Subject</th>
+                        <th>Created By</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for ticket in tickets %}
+                    <tr>
+                        <td>{{ ticket.id }}</td>
+                        <td><a href="tickets.php?ticket={{ ticket.id }}">{{ ticket.subject }}</a></td>
+                        <td>{{ ticket.created_by }}</td>
+                        <td>{{ ticket.created }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div><!--/.table-responsive-->
+    {% else %}
+        <div class="blank-state">
+            <p><b>No Tickets, yet</b></p>
+            <p>No one has added any tickets yet, feel free to be the first.</p>
+            <a href="?new" class="btn btn-primary">{{ new_label }}</a>
+        </div>
+    {% endif %}
+
+    </div> <!--/.container-fluid .main-container-->

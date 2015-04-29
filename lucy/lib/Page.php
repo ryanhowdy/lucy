@@ -40,6 +40,7 @@ class Page
         $this->pageLkup = array(
             'dashboard' => _('Dashboard'),
             'login'     => _('Login'),
+            'tickets'   => _('Tickets'),
         );
     }
 
@@ -98,6 +99,18 @@ class Page
 
         // Display the header
         $this->displayTemplate('global', 'header', $params);
+
+        return true;
+    }
+
+    /**
+     * displayFooter
+     * 
+     * @return boolean
+     */
+    public function displayFooter ()
+    {
+        $this->displayTemplate('global', 'footer', array('year' => gmdate('Y')));
 
         return true;
     }

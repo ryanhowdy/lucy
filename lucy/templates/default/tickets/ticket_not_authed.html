@@ -1,0 +1,70 @@
+
+    <div class="container-fluid main-container">
+
+        <ol class="breadcrumb">
+            <li><a href="tickets.php">Tickets</a></li>
+            <li class="active">Ticket #{{ id }}</li>
+        </ol>
+
+        <div class="row">
+            <div id="ticket-main" class="col-sm-9">
+                <h1>
+                    {{ subject }}
+                    <small>#{{ id }}</small>
+                </h1>
+                <h3><span class="label label-{{ status }}">{{ status }}</span></h3>
+                <h3>{% autoescape false %}{{ created_header }}{% endautoescape %}</h3>
+                <p>{{ description }}</p>
+
+                <form>
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <div class="row">
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="email" name="email" placeholder="Email address">
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <span class="or">or</span>
+                                        <a class="btn btn-link" tabindex="-1" href="login.php">Login</a>
+                                    </div>
+                                </div><!--/.row-->
+                            </div>
+                            <div class="form-group">
+                                <textarea class="form-control" rows="5" placeholder="Leave a comment"></textarea>
+                            </div>
+                        </div>
+                        <div class="panel-footer text-right">
+                            <button type="submit" class="btn btn-primary">Comment</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div id="ticket-details" class="col-sm-3">
+                <ul class="list-unstyled">
+                    {% if assigned_to %}
+                    <li>
+                        <b>Assigned To</b>
+                        <span>{{ assigned_to }}</span>
+                    </li>
+                    {% endif %}
+                    {% if milestone %}
+                    <li>
+                        <b>Milestone</b>
+                        <span>{{ milestone }}</span>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <b>Updated</b>
+                        <span>{{ updated }}</span>
+                    </li>
+                    <li>
+                        <b>Created</b>
+                        <span>{{ created }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div><!--/.row-->
+
+    </div> <!--/.container-fluid .main-container-->

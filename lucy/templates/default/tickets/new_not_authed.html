@@ -1,0 +1,33 @@
+
+    <div id="ticket-page" class="container-fluid main-container">
+
+        <div class="row">
+            <div class="col-sm-8">
+                <form id="new-ticket" name="new-ticket" action="tickets.php?new" method="post">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <div class="row">
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="email" name="email" placeholder="Email address">
+                            </div>
+                            <div class="col-sm-4">
+                                <span class="or">or</span>
+                                <a class="btn btn-link" tabindex="-1" href="login.php">Login</a>
+                            </div>
+                        </div><!--/.row-->
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <input type="text" class="form-control" id="subject" name="subject" placeholder="A short summary of the ticket">
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="A long detailed description"></textarea>
+                    </div>
+                    <input type="hidden" name="submit" value="1"/>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div><!--/.col-sm-8-->
+        </div><!--/.row-->
+
+    </div> <!--/.container-fluid .main-container-->

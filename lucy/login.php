@@ -79,6 +79,13 @@ class LoginController
             return;
         }
 
+        $page->displayFooter();
+        if ($this->error->hasError())
+        {
+            $this->error->displayError();
+            return;
+        }
+
         return;
     }
 
