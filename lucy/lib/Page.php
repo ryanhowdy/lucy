@@ -53,6 +53,10 @@ class Page
      */
     public function displayHeader ($templateOptions = array())
     {
+        $javaScriptIncludes = isset($templateOptions['js_includes'])  ? $templateOptions['js_includes']  : '';
+        $javaScriptCode     = isset($templateOptions['js_code'])      ? $templateOptions['js_code']      : '';
+        $cssIncludes        = isset($templateOptions['css_includes']) ? $templateOptions['css_includes'] : '';
+
         // Get config
         try
         {
@@ -85,9 +89,9 @@ class Page
             'language'      => 'en',
             'site_title'    => $config->name,
             'page_title'    => $this->pageLkup[$this->currentPage],
-            'js_includes'   => '',
-            'js_code'       => '',
-            'css_includes'  => '',
+            'js_includes'   => $javaScriptIncludes,
+            'js_code'       => $javaScriptCode,
+            'css_includes'  => $cssIncludes,
             'links'         => $links,
         );
 

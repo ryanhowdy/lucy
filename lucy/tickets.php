@@ -46,6 +46,12 @@ class TicketsController
         }
         elseif (isset($_GET['ticket']))
         {
+            if (isset($_POST['add-comment']))
+            {
+                $this->displayAddCommentSubmit();
+                return;
+            }
+
             $this->displayTicket();
             return;
         }
@@ -325,11 +331,28 @@ class TicketsController
     {
         $page = new Page('tickets');
 
-        $page->displayHeader();
+        $validator = new FormValidator();
+
+        $page->displayHeader(array(
+            'js_code' => $validator->getJsValidation($this->getProfile('comment')),
+        ));
+
         if ($this->error->hasError())
         {
             $this->error->displayError();
             return;
+        }
+
+        // Get any previous form errors
+        $formErrors = array();
+        if (isset($_SESSION['form_errors']))
+        {
+            $formErrors['title'] = _('There was a problem with your form.');
+
+            if (isset($_SESSION['form_errors']['errors']))
+            {
+                $formErrors['errors'] = $_SESSION['form_errors']['errors'];
+            }
         }
 
         try
@@ -350,7 +373,7 @@ class TicketsController
             return false;
         }
 
-        // Get list of all users for assignee
+        // Get ticket info
         $ticket = ORM::forTable(DB_PREFIX.'ticket')
             ->tableAlias('t')
             ->select('t.*')
@@ -363,17 +386,38 @@ class TicketsController
         $createdBy = '<a href="user.php?id='.$ticket->created_id.'">'.$ticket->created_by.'</a>';
 
         $createdHeader = sprintf(_('%s opened this on %s'), $createdBy, $ticket->created);
+        $description   = $this->parseComment($ticket->description);
+
+        // Get comments
+        $comments = ORM::forTable(DB_PREFIX.'ticket_comment')
+            ->tableAlias('c')
+            ->select('c.*')
+            ->select('u.name', 'updated_by')
+            ->join(DB_PREFIX.'user', array('c.updated_id', '=', 'u.id'), 'u')
+            ->where('c.ticket_id', $_GET['ticket'])
+            ->findArray();
+
+        for ($i = 0; $i < count($comments); $i++)
+        {
+            $c = $comments[$i];
+
+            $comments[$i]['name']    = '<a href="user.php?id='.$c['updated_id'].'">'.$c['updated_by'].'</a>';
+            $comments[$i]['date']    = $c['updated'];
+            $comments[$i]['comment'] = $this->parseComment( $c['comment']);
+        }
 
         $params = array(
             'id'             => $ticket->id,
             'subject'        => $ticket->subject,
             'created_header' => $createdHeader,
-            'description'    => $ticket->description,
+            'description'    => $description,
             'status'         => $ticket->status,
             'assigned_to'    => $ticket->assigned_id,
             'milestone'      => $ticket->milestone,
             'created'        => $ticket->created,
             'updated'        => $ticket->updated,
+            'comments'       => $comments,
+            'form_errors'    => $formErrors,
         );
 
         $templateName = 'ticket_not_authed';
@@ -397,7 +441,72 @@ class TicketsController
             $this->error->displayError();
             return;
         }
+    }
 
+    /**
+     * displayAddCommentSubmit 
+     * 
+     * @return void
+     */
+    function displayAddCommentSubmit ()
+    {
+        $validator = new FormValidator();
+
+        $errors = $validator->validate($_POST, $this->getProfile('comment'));
+        if ($errors !== true)
+        {
+            header("Location: tickets.php?ticket=".(int)$_GET['ticket']);
+            return;
+        }
+
+        if (isset($_SESSION['form_errors']))
+        {
+            unset($_SESSION['form_errors']);
+        }
+
+        try
+        {
+            $db = ORM::get_db();
+        }
+        catch (Exception $e)
+        {
+            $this->error->add(array(
+                'title'   => _('Database Error.'),
+                'message' => _('Could not get users.'),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'sql'     => ORM::getLastQuery(),
+            ));
+
+            return false;
+        }
+
+        // Get the user info, either from email or logged in user
+        $user = $this->getUser();
+
+        // Is this a real user
+        if (isset($user['real_user_error']))
+        {
+            $_SESSION['form_errors']['errors'][] = _('Email address already taken. Please try again or login.');
+
+            header("Location: tickets.php?new");
+            return;
+        }
+
+        $ticket = ORM::forTable(DB_PREFIX.'ticket_comment')->create();
+
+        $ticket->set(array(
+            'ticket_id'  => $_GET['ticket'],
+            'comment'    => $_POST['comment'],
+            'created_id' => $user['id'],
+            'updated_id' => $user['id'],
+        ));
+        $ticket->set_expr('updated', 'UTC_TIMESTAMP()');
+        $ticket->set_expr('created', 'UTC_TIMESTAMP()');
+        $ticket->save();
+
+        header("Location: tickets.php?ticket=".(int)$_GET['ticket']);
     }
 
     /**
@@ -458,5 +567,59 @@ class TicketsController
         }
 
         return $user;
+    }
+
+    /**
+     * parseComment 
+     * 
+     * Cleans up text area comments to be printed to screen.
+     * 
+     * @param string $comment 
+     * 
+     * @return string
+     */
+    function parseComment ($comment)
+    {
+        $comment = htmlentities($comment, ENT_COMPAT, 'UTF-8');
+        $comment = str_replace(array("\r\n", "\r", "\n"), "<br/>", $comment); 
+
+        return $comment;
+    }
+
+    /**
+     * getProfile 
+     * 
+     * Returns a form validation profile.
+     * 
+     * @param string $name 
+     * 
+     * @return array
+     */
+    function getProfile ($name)
+    {
+        $profile = array(
+            'comment' => array(
+                'constraints' => array(
+                    'email' => array(
+                        'format' => '/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/',
+                    ),
+                    'comment' => array(
+                        'required' => 1,
+                    )
+                ),
+                'messages' => array(
+                    'constraints' => array(
+                        'fname' => _('Required'),
+                        'lname' => _('Required'),
+                    ),
+                    'names' => array(
+                        'email'   => _('Email Address'),
+                        'comment' => _('Comment')
+                    )
+                )
+            )
+        );
+
+        return $profile[$name];
     }
 }

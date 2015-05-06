@@ -11,9 +11,11 @@
 <script src="vendor/twbs/bootstrap/dist/js/bootstrap.min.js"></script>
 <link rel="stylesheet" href="vendor/twbs/bootstrap/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="templates/default/css/style.css">
+{% autoescape false %}
 {{ js_includes }}
 {{ js_code }}
 {{ css_includes }}
+{% endautoescape %}
 </head>
 <body>
     <div class="container-fluid page-title">

@@ -16,19 +16,42 @@
                 </h1>
                 <h3><span class="label label-{{ status }}">{{ status }}</span></h3>
                 <h3>{% autoescape false %}{{ created_header }}{% endautoescape %}</h3>
-                <p>{{ description }}</p>
+                <p class="description">{% autoescape false %}{{ description }}{% endautoescape %}</p>
 
-                <form>
+                {% for comment in comments %}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <b>{% autoescape false %}{{ comment.name }}{% endautoescape %}</b>
+                            <small>{{ comment.date }}</small>
+                        </div>
+                        <div class="panel-body">
+                            {% autoescape false %}{{ comment.comment }}{% endautoescape %}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <form method="post" action="tickets.php?ticket={{ id }}">
                     <div class="panel panel-default">
                         <div class="panel-body">
+
+                            {% if form_errors|length > 0 %}
+                            <div class="alert alert-danger" role="alert">
+                                <p><strong>{{ form_errors.title }}</strong></p>
+                                {% for error in form_errors.errors %}
+                                <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
                             <div class="form-group">
-                                <textarea class="form-control" rows="5" placeholder="Leave a comment"></textarea>
+                                <textarea name="comment" class="form-control" rows="5" placeholder="Leave a comment"></textarea>
                             </div>
                         </div>
                         <div class="panel-footer text-right">
                             <button type="submit" class="btn btn-primary">Comment</button>
                         </div>
                     </div>
+                    <input type="hidden" name="add-comment" value="1"/>
                 </form>
             </div>
             <div id="ticket-details" class="col-sm-3">

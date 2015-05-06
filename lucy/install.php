@@ -746,8 +746,9 @@ define('DEBUG',         false);";
             //------------------------------------
 
             // Tables with user + other foreign keys
-            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_status`");
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_comment`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_milestone`");
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_status`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket`");
 
             // Tables with user foreign keys
@@ -897,6 +898,23 @@ define('DEBUG',         false);";
                     PRIMARY KEY (`id`),
                     FOREIGN KEY (`created_id`)  REFERENCES `".DB_PREFIX."user`(`id`),
                     FOREIGN KEY (`updated_id`)  REFERENCES `".DB_PREFIX."user`(`id`)
+                ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
+            );
+
+            // Ticket Comments
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ticket_comment` (
+                    `id`                    INT NOT NULL AUTO_INCREMENT, 
+                    `ticket_id`             INT NOT NULL,
+                    `comment`               TEXT NOT NULL,
+                    `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `created_id`            INT NOT NULL,
+                    `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+                    `updated_id`            INT NOT NULL,
+                    PRIMARY KEY (`id`), 
+                    FOREIGN KEY (`ticket_id`)  REFERENCES `".DB_PREFIX."ticket`(`id`),
+                    FOREIGN KEY (`created_id`) REFERENCES `".DB_PREFIX."user`(`id`),
+                    FOREIGN KEY (`updated_id`) REFERENCES `".DB_PREFIX."user`(`id`)
                 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
             );
         }

@@ -110,10 +110,22 @@ body {
 }
 #ticket-main
 {
+    > p.description
+    {
+        margin: 0 0 50px 0;
+    }
+
+    // This is the comments blocks
     .panel
     {
-        margin: 50px 0 20px 0;
+        margin: 30px 0 20px 0;
         max-width: 800px;
+
+        > .panel-heading > small
+        {
+            color: #999;
+            padding-left: 10px;
+        }
     }
 }
 #ticket-details
