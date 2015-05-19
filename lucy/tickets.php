@@ -44,6 +44,17 @@ class TicketsController
             $this->displayNewTicketForm();
             return;
         }
+        elseif (isset($_GET['edit']))
+        {
+            if (isset($_POST['submit']))
+            {
+                $this->displayEditTicketSubmit();
+                return;
+            }
+
+            $this->displayEditTicketForm();
+            return;
+        }
         elseif (isset($_GET['ticket']))
         {
             if (isset($_POST['add-comment']))
@@ -100,7 +111,12 @@ class TicketsController
             ->tableAlias('t')
             ->select('t.*')
             ->select('u.name', 'created_by')
+            ->select('s.name', 'status_name')
+            ->select('m.name', 'milestone_name')
             ->join(DB_PREFIX.'user', array('t.created_id', '=', 'u.id'), 'u')
+            ->left_outer_join(DB_PREFIX.'ticket_status', array('t.status_id', '=', 's.id'), 's')
+            ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
+            ->order_by_asc('id')
             ->findArray();
 
         $params = array(
@@ -171,19 +187,10 @@ class TicketsController
             {
                 $formErrors['errors'] = $_SESSION['form_errors']['errors'];
             }
-
-            if (isset($_SESSION['form_errors']['fields']))
-            {
-                $formErrors['title'] = _('The following fields are required:');
-
-                foreach ($_SESSION['form_errors']['fields'] as $field)
-                {
-                    $formErrors['errors'][] = $field;
-                }
-            }
         }
 
-        $assignees = array();
+        $assignees    = array();
+        $milestones   = array();
         $templateName = 'new_not_authed';
 
         if ($this->user->isLoggedIn())
@@ -193,7 +200,7 @@ class TicketsController
             $params['user_id'] = $this->user->id;
 
             // Get list of all users for assignee
-            $users = ORM::forTable(DB_PREFIX.'user') ->findMany();
+            $users = ORM::forTable(DB_PREFIX.'user')->findMany();
 
             foreach ($users as $user)
             {
@@ -202,11 +209,25 @@ class TicketsController
                     'label' => $user['name'],
                 );
             }
+
+            // Get list of all open milestones
+            $milestoneRecords = ORM::forTable(DB_PREFIX.'ticket_milestone')
+                ->where('complete', '0000-00-00')
+                ->findMany();
+
+            foreach ($milestoneRecords as $milestone)
+            {
+                $milestones[] = array(
+                    'id'    => $milestone['id'],
+                    'label' => $milestone['name'].' ('.$milestone['due'].')',
+                );
+            }
         }
 
         $params = array(
             'milestone_label' => _('Milestone'),
             'assignees'       => $assignees,
+            'milestones'      => $milestones,
             'form_errors'     => $formErrors,
         );
 
@@ -241,33 +262,27 @@ class TicketsController
      */
     function displayNewTicketSubmit ()
     {
-        // Check required fields
-        $requiredFields  = array('subject', 'description');
-        $missingRequired = false;
+        $validator = new FormValidator();
 
-        foreach ($requiredFields as $field)
-        {
-            if (empty($_POST[$field]))
-            {
-                $_SESSION['form_errors']['fields'][$field] = $field;
-
-                $missingRequired = true;
-            }
-        }
-
-        if ($missingRequired)
+        $errors = $validator->validate($_POST, $this->getProfile('new_ticket'));
+        if ($errors !== true)
         {
             header("Location: tickets.php?new");
             return;
         }
 
         // Make sure we have a user
-        if (empty($_POST['email']) && empty($_POST['user_id']))
+        if (empty($_POST['email']) && !$this->user->isLoggedIn())
         {
             $_SESSION['form_errors']['errors'][] = _('You must provide an email address or login.');
 
             header("Location: tickets.php?new");
             return;
+        }
+
+        if (isset($_SESSION['form_errors']))
+        {
+            unset($_SESSION['form_errors']);
         }
 
         try
@@ -300,6 +315,7 @@ class TicketsController
             return;
         }
 
+        // Create the ticket
         $ticket = ORM::forTable(DB_PREFIX.'ticket')->create();
 
         $ticket->set(array(
@@ -310,6 +326,22 @@ class TicketsController
         ));
         $ticket->set_expr('updated', 'UTC_TIMESTAMP()');
         $ticket->set_expr('created', 'UTC_TIMESTAMP()');
+
+        // status
+        $ticket->set('status_id', 1);
+
+        // assignee
+        if (isset($_POST['assigned_id']) && !empty($_POST['assigned_id']))
+        {
+            $ticket->set('assigned_id', $_POST['assigned_id']);
+        }
+
+        // milestone
+        if (isset($_POST['milestone']) && !empty($_POST['milestone']))
+        {
+            $ticket->set('milestone_id', $_POST['milestone']);
+        }
+
         $ticket->save();
 
         if (isset($_SESSION['form_errors']))
@@ -378,9 +410,10 @@ class TicketsController
             ->tableAlias('t')
             ->select('t.*')
             ->select('c.name', 'created_by')
-//            ->select('u.name', 'updated_by')
+            ->select('m.name', 'milestone_name')
+            ->select('m.due', 'milestone_due')
             ->join(DB_PREFIX.'user', array('t.created_id', '=', 'c.id'), 'c')
-//            ->join(DB_PREFIX.'user', array('t.updated_id', '=', 'u.id'), 'u')
+            ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
             ->findOne($_GET['ticket']);
 
         $createdBy = '<a href="user.php?id='.$ticket->created_id.'">'.$ticket->created_by.'</a>';
@@ -412,23 +445,24 @@ class TicketsController
             'created_header' => $createdHeader,
             'description'    => $description,
             'status'         => $ticket->status,
+            'assignee_id'    => $ticket->assigned_id,
             'assigned_to'    => $ticket->assigned_id,
-            'milestone'      => $ticket->milestone,
+            'milestone_id'   => $ticket->milestone_id,
+            'milestone_name' => $ticket->milestone_name,
+            'milestone_due'  => $ticket->milestone_due,
             'created'        => $ticket->created,
             'updated'        => $ticket->updated,
             'comments'       => $comments,
             'form_errors'    => $formErrors,
         );
 
-        $templateName = 'ticket_not_authed';
         if ($this->user->isLoggedIn())
         {
-            $templateName = 'ticket';
-
-            $params['user_id'] = $this->user->id;
+            $params['logged_in'] = 1;
+            $params['user_id']   = $this->user->id;
         }
 
-        $page->displayTemplate('tickets', $templateName, $params);
+        $page->displayTemplate('tickets', 'ticket', $params);
         if ($this->error->hasError())
         {
             $this->error->displayError();
@@ -598,6 +632,19 @@ class TicketsController
     function getProfile ($name)
     {
         $profile = array(
+            'new_ticket' => array(
+                'constraints' => array(
+                    'subject' => array(
+                        'required' => 1,
+                    ),
+                    'description' => array(
+                        'required' => 1,
+                    ),
+                    'email' => array(
+                        'format' => '/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/',
+                    )
+                )
+            ),
             'comment' => array(
                 'constraints' => array(
                     'email' => array(

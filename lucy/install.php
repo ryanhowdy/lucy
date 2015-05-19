@@ -676,21 +676,16 @@ define('DEBUG',         false);";
 
         $userId = $user->id();
 
-        $userActivity = ORM::forTable(DB_PREFIX.'user_activity')->create();
-        $userActivity->set(array('user_id' => $userId));
-        $userActivity->save();
-
         // Insert the default ticket statuses
         $defaultStatuses = array(
             'New',
+            'Accepted',
+            'Rejected',
             'Assigned',
             'Started',
             'Resolved',
-            'Reassigned',
-            'Rejected',
             'Reopened',
         );
-
         foreach ($defaultStatuses as $status)
         {
             $ticketStatus = ORM::forTable(DB_PREFIX.'ticket_status')->create();
@@ -746,10 +741,11 @@ define('DEBUG',         false);";
             //------------------------------------
 
             // Tables with user + other foreign keys
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_comment_votes`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_comment`");
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_milestone`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_status`");
-            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket`");
 
             // Tables with user foreign keys
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."user_activity`");
@@ -833,37 +829,47 @@ define('DEBUG',         false);";
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
             );
 
+            /**
+             * User Activity
+             *  
+             * Levels
+             *  
+             *   Each level is 1 followed by that levels amount of 0's.
+             *   Level 1 =     10
+             *   Level 2 =    100
+             *   Level 3 =  1,000
+             *   Level 4 = 10,000
+             *  
+             * Categories
+             *  
+             *   new ticket             10  create a new ticket that gets accepted
+             *   resolve ticket         25  resolve an accepted ticket assigned to you
+             *   handle ticket           5  change any ticket from new to any other status
+             *   assigned ticket         2  when a ticket is assigned to you
+             *   upvote comment          1  when you upvote another user comment
+             *   receive upvote         ??  when someone upvotes you.
+             *                              you get 10 * the level of the person who upvoted you
+             *                              so if level 5 upvotes you, you get 50
+             *   answer accepted        50  your answer on discussion board is accepted
+             *   suggestion accepted    25  your suggestion gets turned into a ticket
+             *   suggestion upvoted     10  your suggestion gets upvoted by another user
+             *   upvote suggestion       2  when you upvote another user suggestion
+             *   translate string       10  you translate a word/phrase into another language
+             *   commit code             5  you get 5 points for each line of code committed
+             *  
+             */
+
             // User Activity
             $db->exec("
                 CREATE TABLE IF NOT EXISTS `".DB_PREFIX."user_activity` (
                     `id`                    INT NOT NULL AUTO_INCREMENT, 
                     `user_id`               INT NOT NULL,
-                    `kudos`                 INT NOT NULL DEFAULT 0,                             # user upvotes a discussion comment
-                    `commits`               INT NOT NULL DEFAULT 0,
-                    `tickets`               INT NOT NULL DEFAULT 0,                             # tickets opened or closed
-                    `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `points`                INT NOT NULL DEFAULT '0',
+                    `category`              VARCHAR(255),
+                    `reason`                TEXT,
+                    `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
                     PRIMARY KEY (`id`), 
                     FOREIGN KEY (`user_id`) REFERENCES `".DB_PREFIX."user`(`id`)
-                ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
-            );
-
-            // Tickets
-            $db->exec("
-                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ticket` (
-                    `id`                    INT NOT NULL AUTO_INCREMENT, 
-                    `subject`               VARCHAR(255) NOT NULL, 
-                    `description`           TEXT NOT NULL,
-                    `assigned_id`           INT NULL,
-                    `status`                INT NULL,
-                    `milestone`             INT NULL,
-                    `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
-                    `created_id`            INT NULL,
-                    `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-                    `updated_id`            INT NULL,
-                    PRIMARY KEY (`id`), 
-                    FOREIGN KEY (`assigned_id`) REFERENCES `".DB_PREFIX."user`(`id`),
-                    FOREIGN KEY (`created_id`)  REFERENCES `".DB_PREFIX."user`(`id`),
-                    FOREIGN KEY (`updated_id`)  REFERENCES `".DB_PREFIX."user`(`id`)
                 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
             );
 
@@ -901,12 +907,35 @@ define('DEBUG',         false);";
                 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
             );
 
+            // Tickets
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ticket` (
+                    `id`                    INT NOT NULL AUTO_INCREMENT, 
+                    `subject`               VARCHAR(255) NOT NULL, 
+                    `description`           TEXT NOT NULL,
+                    `assigned_id`           INT NULL,
+                    `status_id`             INT NOT NULL DEFAULT '1',
+                    `milestone_id`          INT NULL,
+                    `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `created_id`            INT NULL,
+                    `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+                    `updated_id`            INT NULL,
+                    PRIMARY KEY (`id`), 
+                    FOREIGN KEY (`assigned_id`) REFERENCES `".DB_PREFIX."user`(`id`),
+                    FOREIGN KEY (`status_id`) REFERENCES `".DB_PREFIX."ticket_status`(`id`),
+                    FOREIGN KEY (`milestone_id`) REFERENCES `".DB_PREFIX."ticket_milestone`(`id`),
+                    FOREIGN KEY (`created_id`)  REFERENCES `".DB_PREFIX."user`(`id`),
+                    FOREIGN KEY (`updated_id`)  REFERENCES `".DB_PREFIX."user`(`id`)
+                ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
+            );
+
             // Ticket Comments
             $db->exec("
                 CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ticket_comment` (
                     `id`                    INT NOT NULL AUTO_INCREMENT, 
                     `ticket_id`             INT NOT NULL,
                     `comment`               TEXT NOT NULL,
+                    `total_votes`           INT NOT NULL DEFAULT '0',
                     `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
                     `created_id`            INT NOT NULL,
                     `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
@@ -917,12 +946,26 @@ define('DEBUG',         false);";
                     FOREIGN KEY (`updated_id`) REFERENCES `".DB_PREFIX."user`(`id`)
                 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
             );
+
+            // Ticket Comment Votes
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ticket_comment_votes` (
+                    `id`                    INT NOT NULL AUTO_INCREMENT, 
+                    `ticket_comment_id`     INT NOT NULL,
+                    `vote`                  INT NOT NULL,
+                    `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `created_id`            INT NOT NULL,
+                    PRIMARY KEY (`id`), 
+                    FOREIGN KEY (`ticket_comment_id`)  REFERENCES `".DB_PREFIX."ticket_comment`(`id`),
+                    FOREIGN KEY (`created_id`) REFERENCES `".DB_PREFIX."user`(`id`)
+                ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
+            );
         }
         catch (Exception $e)
         {
             $_SESSION['form_errors'] = array(
                 'Could not create tables.',
-                $e->getMessage()
+                $e->getMessage(),
             );
 
             return false;

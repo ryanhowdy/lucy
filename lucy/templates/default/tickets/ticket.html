@@ -1,14 +1,11 @@
 
     <div class="container-fluid main-container">
 
-        <ol class="breadcrumb">
-            <li><a href="tickets.php">Tickets</a></li>
-            <li class="active">Ticket #{{ id }}</li>
-        </ol>
+{{ include('nav.html') }}
 
         <div class="row">
             <div id="ticket-main" class="col-sm-9">
-                <a class="btn btn-default pull-right" href="?edit={{ id }}">Edit</a>
+                {% if logged_in %}<a class="btn btn-default pull-right" href="?edit={{ id }}">Edit</a>{% endif %}
 
                 <h1>
                     {{ subject }}
@@ -34,15 +31,29 @@
                     <div class="panel panel-default">
                         <div class="panel-body">
 
-                            {% if form_errors|length > 0 %}
+                        {% if form_errors|length > 0 %}
                             <div class="alert alert-danger" role="alert">
                                 <p><strong>{{ form_errors.title }}</strong></p>
-                                {% for error in form_errors.errors %}
+                            {% for error in form_errors.errors %}
                                 <p>{{ error }}</p>
-                                {% endfor %}
+                            {% endfor %}
                             </div>
-                            {% endif %}
+                        {% endif %}
 
+                        {% if not logged_in %}
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <div class="row">
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="email" name="email" placeholder="Email address">
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <span class="or">or</span>
+                                        <a class="btn btn-link" tabindex="-1" href="login.php">Login</a>
+                                    </div>
+                                </div><!--/.row-->
+                            </div>
+                        {% endif %}
                             <div class="form-group">
                                 <textarea name="comment" class="form-control" rows="5" placeholder="Leave a comment"></textarea>
                             </div>
@@ -56,16 +67,21 @@
             </div>
             <div id="ticket-details" class="col-sm-3">
                 <ul class="list-unstyled">
-                    {% if assigned_to %}
+                    {% if assignee_id %}
                     <li>
                         <b>Assigned To</b>
-                        <span>{{ assigned_to }}</span>
+                        <span>
+                            <a href="user.php?id={{ assignee_id }}">{{ assigned_to }}</a>
+                        </span>
                     </li>
                     {% endif %}
-                    {% if milestone %}
+                    {% if milestone_id %}
                     <li>
                         <b>Milestone</b>
-                        <span>{{ milestone }}</span>
+                        <span>
+                            <a href="tickets.php?milestone={{ milestone_id }}">{{ milestone_name }}</a>
+                            ({{ milestone_due }})
+                        </span>
                     </li>
                     {% endif %}
                     <li>

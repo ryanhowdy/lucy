@@ -28,7 +28,7 @@
                         <select class="form-control" id="assigned_id" name="assigned_id">
                             <option></option>
                         {% for assignee in assignees %}
-                            <option id="{{ assignee.id }}">{{ assignee.label }}</option>
+                            <option value="{{ assignee.id }}">{{ assignee.label }}</option>
                         {% endfor %}
                         </select>
                     </div>
@@ -37,7 +37,7 @@
                         <select class="form-control" id="milestone" name="milestone">
                             <option></option>
                         {% for milestone in milestones %}
-                            <option id="{{ milestone.id }}">{{ milestone.label }}</option>
+                            <option value="{{ milestone.id }}">{{ milestone.label }}</option>
                         {% endfor %}
                         </select>
                     </div>

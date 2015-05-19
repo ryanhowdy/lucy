@@ -1,9 +1,7 @@
 
     <div class="container-fluid main-container">
 
-        <p>
-            <a href="?new" class="btn btn-lg btn-primary">{{ new_label }}</a>
-        </p>
+{{ include('nav.html') }}
 
     {% if tickets|length > 0 %}
         <div class="table-responsive">
@@ -11,7 +9,10 @@
                 <thead>
                     <tr>
                         <th>Id</th>
+                        <th>Status</th>
                         <th>Subject</th>
+                        <th>Assigned To</th>
+                        <th>Milestone</th>
                         <th>Created By</th>
                         <th>Created</th>
                     </tr>
@@ -20,7 +21,10 @@
                 {% for ticket in tickets %}
                     <tr>
                         <td>{{ ticket.id }}</td>
+                        <td>{{ ticket.status_name }}</td>
                         <td><a href="tickets.php?ticket={{ ticket.id }}">{{ ticket.subject }}</a></td>
+                        <td>{{ ticket.assigned_to }}</td>
+                        <td>{{ ticket.milestone_name }}</td>
                         <td>{{ ticket.created_by }}</td>
                         <td>{{ ticket.created }}</td>
                     </tr>

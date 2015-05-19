@@ -5,6 +5,12 @@ body {
   margin-left: 15px;
   margin-right: 15px;
 }
+.container-fluid > p.pull-right {
+  margin: 0;
+}
+.container-fluid > .nav-tabs {
+  margin-bottom: 30px;
+}
 .page-title > h3 {
   color: #b3b3b3;
 }

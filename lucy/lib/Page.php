@@ -40,6 +40,7 @@ class Page
         $this->pageLkup = array(
             'dashboard' => _('Dashboard'),
             'login'     => _('Login'),
+            'help'      => _('Help'),
             'tickets'   => _('Tickets'),
         );
     }
