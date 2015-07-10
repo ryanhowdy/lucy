@@ -97,11 +97,10 @@ class TicketsController
         {
             $this->error->add(array(
                 'title'   => _('Database Error.'),
-                'message' => _('Could not get tickets.'),
+                'message' => _('Could not connect to database.'),
                 'object'  => $e,
                 'file'    => __FILE__,
                 'line'    => __LINE__,
-                'sql'     => ORM::getLastQuery(),
             ));
 
             return false;
@@ -113,10 +112,15 @@ class TicketsController
             ->select('u.name', 'created_by')
             ->select('s.name', 'status_name')
             ->select('m.name', 'milestone_name')
+            ->select('ua.name', 'assigned_name')
+            ->select_expr('COUNT(tc.id)', 'comments_count')
             ->join(DB_PREFIX.'user', array('t.created_id', '=', 'u.id'), 'u')
+            ->left_outer_join(DB_PREFIX.'user', array('t.assigned_id', '=', 'ua.id'), 'ua')
             ->left_outer_join(DB_PREFIX.'ticket_status', array('t.status_id', '=', 's.id'), 's')
             ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
+            ->left_outer_join(DB_PREFIX.'ticket_comment', array('t.id', '=', 'tc.ticket_id'), 'tc')
             ->order_by_asc('id')
+            ->group_by('t.id')
             ->findArray();
 
         $params = array(
@@ -167,11 +171,10 @@ class TicketsController
         {
             $this->error->add(array(
                 'title'   => _('Database Error.'),
-                'message' => _('Could not get users.'),
+                'message' => _('Could not connect to database.'),
                 'object'  => $e,
                 'file'    => __FILE__,
                 'line'    => __LINE__,
-                'sql'     => ORM::getLastQuery(),
             ));
 
             return false;
@@ -293,11 +296,10 @@ class TicketsController
         {
             $this->error->add(array(
                 'title'   => _('Database Error.'),
-                'message' => _('Could not get users.'),
+                'message' => _('Could not connect to database.'),
                 'object'  => $e,
                 'file'    => __FILE__,
                 'line'    => __LINE__,
-                'sql'     => ORM::getLastQuery(),
             ));
 
             return false;
@@ -365,16 +367,6 @@ class TicketsController
 
         $validator = new FormValidator();
 
-        $page->displayHeader(array(
-            'js_code' => $validator->getJsValidation($this->getProfile('comment')),
-        ));
-
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
-
         // Get any previous form errors
         $formErrors = array();
         if (isset($_SESSION['form_errors']))
@@ -395,11 +387,10 @@ class TicketsController
         {
             $this->error->add(array(
                 'title'   => _('Database Error.'),
-                'message' => _('Could not get users.'),
+                'message' => _('Could not connect to database.'),
                 'object'  => $e,
                 'file'    => __FILE__,
                 'line'    => __LINE__,
-                'sql'     => ORM::getLastQuery(),
             ));
 
             return false;
@@ -412,9 +403,17 @@ class TicketsController
             ->select('c.name', 'created_by')
             ->select('m.name', 'milestone_name')
             ->select('m.due', 'milestone_due')
+            ->select('ua.name', 'assigned_name')
             ->join(DB_PREFIX.'user', array('t.created_id', '=', 'c.id'), 'c')
+            ->left_outer_join(DB_PREFIX.'user', array('t.assigned_id', '=', 'ua.id'), 'ua')
             ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
             ->findOne($_GET['ticket']);
+
+        if ($ticket === false)
+        {
+            header("Location: tickets.php");
+            return;
+        }
 
         $createdBy = '<a href="user.php?id='.$ticket->created_id.'">'.$ticket->created_by.'</a>';
 
@@ -446,7 +445,7 @@ class TicketsController
             'description'    => $description,
             'status'         => $ticket->status,
             'assignee_id'    => $ticket->assigned_id,
-            'assigned_to'    => $ticket->assigned_id,
+            'assigned_name'  => $ticket->assigned_name,
             'milestone_id'   => $ticket->milestone_id,
             'milestone_name' => $ticket->milestone_name,
             'milestone_due'  => $ticket->milestone_due,
@@ -460,6 +459,16 @@ class TicketsController
         {
             $params['logged_in'] = 1;
             $params['user_id']   = $this->user->id;
+        }
+
+        $page->displayHeader(array(
+            'js_code' => $validator->getJsValidation($this->getProfile('comment')),
+        ));
+
+        if ($this->error->hasError())
+        {
+            $this->error->displayError();
+            return;
         }
 
         $page->displayTemplate('tickets', 'ticket', $params);
@@ -506,11 +515,10 @@ class TicketsController
         {
             $this->error->add(array(
                 'title'   => _('Database Error.'),
-                'message' => _('Could not get users.'),
+                'message' => _('Could not connect to database.'),
                 'object'  => $e,
                 'file'    => __FILE__,
                 'line'    => __LINE__,
-                'sql'     => ORM::getLastQuery(),
             ));
 
             return false;
@@ -541,6 +549,223 @@ class TicketsController
         $ticket->save();
 
         header("Location: tickets.php?ticket=".(int)$_GET['ticket']);
+    }
+
+    /**
+     * displayEditTicketForm 
+     * 
+     * Prints the from for editting an existing ticket.
+     * 
+     * @return void
+     */
+    function displayEditTicketForm ()
+    {
+        $page = new Page('tickets');
+
+        $page->displayHeader();
+        if ($this->error->hasError())
+        {
+            $this->error->displayError();
+            return;
+        }
+
+        if (!$this->user->isLoggedIn())
+        {
+            $page->displayMustBeLoggedIn();
+            return;
+        }
+
+        try
+        {
+            $db = ORM::get_db();
+        }
+        catch (Exception $e)
+        {
+            $this->error->add(array(
+                'title'   => _('Database Error.'),
+                'message' => _('Could not connect to database.'),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+            ));
+
+            return false;
+        }
+
+        // Get any previous form errors
+        $formErrors = array();
+        if (isset($_SESSION['form_errors']))
+        {
+            $formErrors['title'] = _('There was a problem with your form.');
+
+            if (isset($_SESSION['form_errors']['errors']))
+            {
+                $formErrors['errors'] = $_SESSION['form_errors']['errors'];
+            }
+        }
+
+        // Get ticket info
+        $ticket = ORM::forTable(DB_PREFIX.'ticket')
+            ->tableAlias('t')
+            ->select('t.*')
+            ->select('c.name', 'created_by')
+            ->select('s.name', 'status_name')
+            ->select('m.name', 'milestone_name')
+            ->join(DB_PREFIX.'user', array('t.created_id', '=', 'c.id'), 'c')
+            ->left_outer_join(DB_PREFIX.'ticket_status', array('t.status_id', '=', 's.id'), 's')
+            ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
+            ->findOne($_GET['edit']);
+
+        // Get list of all users for assignee
+        $users = ORM::forTable(DB_PREFIX.'user')->findMany();
+
+        foreach ($users as $user)
+        {
+            $assignees[] = array(
+                'id'    => $user['id'],
+                'label' => $user['name'],
+            );
+        }
+
+        // Get list of all open milestones
+        $milestoneRecords = ORM::forTable(DB_PREFIX.'ticket_milestone')
+            ->where('complete', '0000-00-00')
+            ->findMany();
+
+        foreach ($milestoneRecords as $milestone)
+        {
+            $milestones[] = array(
+                'id'    => $milestone['id'],
+                'label' => $milestone['name'].' ('.$milestone['due'].')',
+            );
+        }
+
+        $params = array(
+            'user_id'         => $this->user->id,
+            'milestone_label' => _('Milestone'),
+            'assignees'       => $assignees,
+            'milestones'      => $milestones,
+            'form_errors'     => $formErrors,
+            'values'          => array(
+                'ticket_id'   => $ticket->id,
+                'subject'     => $ticket->subject,
+                'description' => $ticket->description,
+                'assignee'    => $ticket->assigned_id,
+                'milestone'   => $ticket->milestone_id,
+            ),
+        );
+
+        $page->displayTemplate('tickets', 'edit', $params);
+        if ($this->error->hasError())
+        {
+            $this->error->displayError();
+            return;
+        }
+
+        $page->displayFooter();
+        if ($this->error->hasError())
+        {
+            $this->error->displayError();
+            return;
+        }
+
+        if (isset($_SESSION['form_errors']))
+        {
+            unset($_SESSION['form_errors']);
+        }
+
+        return;
+    }
+
+    /**
+     * displayEditTicketSubmit 
+     * 
+     * @return void
+     */
+    function displayEditTicketSubmit ()
+    {
+        $validator = new FormValidator();
+
+        $errors = $validator->validate($_POST, $this->getProfile('new_ticket'));
+        if ($errors !== true)
+        {
+            header("Location: tickets.php");
+            return;
+        }
+
+        if (!$this->user->isLoggedIn())
+        {
+            $page->displayMustBeLoggedIn();
+            return;
+        }
+
+        if (isset($_SESSION['form_errors']))
+        {
+            unset($_SESSION['form_errors']);
+        }
+
+        try
+        {
+            $db = ORM::get_db();
+        }
+        catch (Exception $e)
+        {
+            $this->error->add(array(
+                'title'   => _('Database Error.'),
+                'message' => _('Could not connect to database.'),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+            ));
+
+            return false;
+        }
+
+        try
+        {
+            $ticket = ORM::forTable(DB_PREFIX.'ticket')->findOne($_GET['id']);
+
+            $ticket->set(array(
+                'subject'     => $_POST['subject'],
+                'description' => $_POST['description'],
+                'updated_id'  => $_POST['user_id'],
+            ));
+
+            // assignee
+            if (isset($_POST['assigned_id']) && !empty($_POST['assigned_id']))
+            {
+                $ticket->assigned_id = $_POST['assigned_id'];
+            }
+
+            // milestone
+            if (isset($_POST['milestone']) && !empty($_POST['milestone']))
+            {
+                $ticket->milestone_id = $_POST['milestone'];
+            }
+
+            $ticket->set_expr('updated', 'UTC_TIMESTAMP()');
+            $ticket->save();
+        }
+        catch (Exception $e)
+        {
+            $this->error->add(array(
+                'title'   => _('Database Error.'),
+                'message' => _('Could not update ticket.'),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'sql'     => ORM::getLastQuery(),
+            ));
+
+            return false;
+        }
+
+        if (isset($_SESSION['form_errors']))
+        {
+            unset($_SESSION['form_errors']);
+        }
+
+        header("Location: tickets.php?ticket=".$_GET['id']);
     }
 
     /**
@@ -642,8 +867,14 @@ class TicketsController
                     ),
                     'email' => array(
                         'format' => '/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/',
-                    )
-                )
+                    ),
+                    'assignee_id' => array(
+                        'format' => '/^[0-9]+$/',
+                    ),
+                    'milestone_id' => array(
+                        'format' => '/^[0-9]+$/',
+                    ),
+                ),
             ),
             'comment' => array(
                 'constraints' => array(
@@ -652,7 +883,7 @@ class TicketsController
                     ),
                     'comment' => array(
                         'required' => 1,
-                    )
+                    ),
                 ),
                 'messages' => array(
                     'constraints' => array(
@@ -662,9 +893,9 @@ class TicketsController
                     'names' => array(
                         'email'   => _('Email Address'),
                         'comment' => _('Comment')
-                    )
-                )
-            )
+                    ),
+                ),
+            ),
         );
 
         return $profile[$name];

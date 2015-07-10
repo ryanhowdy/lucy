@@ -121,6 +121,20 @@ class Page
     }
 
     /**
+     * displayMustBeLoggedIn 
+     * 
+     * Prints the page we show the user when they tried to perform
+     * an action that requires them to be logged in.
+     * 
+     * @return void
+     */
+    public function displayMustBeLoggedIn ()
+    {
+        $this->displayTemplate('global', 'must_be_logged_in');
+        return;
+    }
+
+    /**
      * displayTemplate 
      * 
      * A wrapper that loads and renders a twig template file.

@@ -110,3 +110,7 @@ body {
 #ticket-details > ul > li > b {
   display: block;
 }
+#edit-ticket #description {
+  height: 200px;
+  min-height: 200px;
+}
