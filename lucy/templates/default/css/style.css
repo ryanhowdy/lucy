@@ -114,3 +114,10 @@ body {
   height: 200px;
   min-height: 200px;
 }
+#user-sidebar {
+  text-align: center;
+}
+#user-sidebar ul {
+  list-style-type: none;
+  padding: 0;
+}
