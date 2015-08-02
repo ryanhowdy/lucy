@@ -24,6 +24,14 @@
                 </div>
                 <div class="col-sm-4">
                     <div class="form-group">
+                        <label for="status_id">Status</label>
+                        <select class="form-control" id="status_id" name="status_id">
+                        {% for status in statuses %}
+                            <option {% if status.id == values.status %}selected="selected"{% endif %} value="{{ status.id }}">{{ status.label }}</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="assigned_id">Assignee</label>
                         <select class="form-control" id="assigned_id" name="assigned_id">
                             <option></option>

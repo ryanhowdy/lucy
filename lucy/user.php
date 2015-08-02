@@ -54,6 +54,13 @@ class UserController
             return;
         }
 
+        $userId = $this->user->id;
+
+        if (isset($_GET['id']))
+        {
+            $userId = $_GET['id'];
+        }
+
         try
         {
             $db = ORM::get_db();
@@ -71,15 +78,16 @@ class UserController
             return false;
         }
 
-        $user = ORM::forTable(DB_PREFIX.'user')->findOne($_GET['id']);
+        $user = ORM::forTable(DB_PREFIX.'user')->findOne($userId);
 
         $params = $user->asArray();
 
         $activity = ORM::forTable(DB_PREFIX.'user_activity')
-            ->where('user_id', $_GET['id'])
+            ->where('user_id', $userId)
             ->findArray();
 
-        $params['joindate'] = $params['created'];
+        $params['joindate']   = $params['created'];
+        $params['activities'] = $activity;
 
         $page->displayTemplate('home', 'user', $params);
         if ($this->error->hasError())

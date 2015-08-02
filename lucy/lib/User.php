@@ -88,6 +88,17 @@ class User
             return false;
         }
 
+        // If we couldn't find the user based on the session data
+        // then the session is invalid, lets unset it and exit
+        // before saving any user data
+        if (empty($user))
+        {
+            unset($_SESSION['lucy_id']);
+            unset($_SESSION['lucy_token']);
+
+            return true;
+        }
+
         $this->id                   = $user['id'];
         $this->token                = $user['token'];
         $this->name                 = $user['name'];

@@ -68,7 +68,7 @@ class Error
         }
 
         echo '<style>.alert > pre { height: 300px; overflow: scroll; }</style>';
-        echo '<div class="alert error-alert" role="alert">';
+        echo '<div class="alert alert-danger" role="alert">';
 
         foreach ($this->errorList as $error)
         {

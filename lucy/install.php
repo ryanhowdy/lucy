@@ -678,20 +678,25 @@ define('DEBUG',         false);";
 
         // Insert the default ticket statuses
         $defaultStatuses = array(
-            'New',
-            'Accepted',
-            'Rejected',
-            'Assigned',
-            'Started',
-            'Resolved',
-            'Reopened',
+            // Simple 
+            array('name' => 'Open',     'color' => '7aa02f'), //green
+            array('name' => 'Closed',   'color' => 'd34924'), //red
+            // Advanced
+            array('name' => 'New',      'color' => 'bde0ff'), //lt blue
+            array('name' => 'Accepted', 'color' => '7aa02f'), //green
+            array('name' => 'Rejected', 'color' => 'd34924'), //red
+            array('name' => 'Assigned', 'color' => 'fae337'), //yellow
+            array('name' => 'Started',  'color' => '388cba'), //blue
+            array('name' => 'Resolved', 'color' => '333333'), //black
+            array('name' => 'Reopened', 'color' => 'ff7400'), //orange
         );
         foreach ($defaultStatuses as $status)
         {
             $ticketStatus = ORM::forTable(DB_PREFIX.'ticket_status')->create();
 
             $ticketStatus->set(array(
-                'name'       => $status,
+                'name'       => $status['name'],
+                'color'      => $status['color'],
                 'created_id' => $userId,
                 'updated_id' => $userId,
             ));
@@ -762,15 +767,17 @@ define('DEBUG',         false);";
             $db->exec("
                 CREATE TABLE IF NOT EXISTS `".DB_PREFIX."config` (
                     `name`                  VARCHAR(255) NOT NULL,
-                    `source_code_url`       VARCHAR(255) NOT NULL
+                    `source_code_url`       VARCHAR(255) NOT NULL,
+                    `ticket_status_class`   VARCHAR(255) NOT NULL
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
             );
 
             $config = ORM::forTable(DB_PREFIX.'config')->create();
 
             $config->set(array(
-                'name'            => $_SESSION['form_values']['name'],
-                'source_code_url' => $_SESSION['form_values']['source_code'],
+                'name'                => $_SESSION['form_values']['name'],
+                'source_code_url'     => $_SESSION['form_values']['source_code'],
+                'ticket_status_class' => 'LucySimple',
             ));
             $config->save();
 
@@ -829,36 +836,6 @@ define('DEBUG',         false);";
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
             );
 
-            /**
-             * User Activity
-             *  
-             * Levels
-             *  
-             *   Each level is 1 followed by that levels amount of 0's.
-             *   Level 1 =     10
-             *   Level 2 =    100
-             *   Level 3 =  1,000
-             *   Level 4 = 10,000
-             *  
-             * Categories
-             *  
-             *   new ticket             10  create a new ticket that gets accepted
-             *   resolve ticket         25  resolve an accepted ticket assigned to you
-             *   handle ticket           5  change any ticket from new to any other status
-             *   assigned ticket         2  when a ticket is assigned to you
-             *   upvote comment          1  when you upvote another user comment
-             *   receive upvote         ??  when someone upvotes you.
-             *                              you get 10 * the level of the person who upvoted you
-             *                              so if level 5 upvotes you, you get 50
-             *   answer accepted        50  your answer on discussion board is accepted
-             *   suggestion accepted    25  your suggestion gets turned into a ticket
-             *   suggestion upvoted     10  your suggestion gets upvoted by another user
-             *   upvote suggestion       2  when you upvote another user suggestion
-             *   translate string       10  you translate a word/phrase into another language
-             *   commit code             5  you get 5 points for each line of code committed
-             *  
-             */
-
             // User Activity
             $db->exec("
                 CREATE TABLE IF NOT EXISTS `".DB_PREFIX."user_activity` (
@@ -867,6 +844,7 @@ define('DEBUG',         false);";
                     `points`                INT NOT NULL DEFAULT '0',
                     `category`              VARCHAR(255),
                     `reason`                TEXT,
+                    `link`                  VARCHAR(255),
                     `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
                     PRIMARY KEY (`id`), 
                     FOREIGN KEY (`user_id`) REFERENCES `".DB_PREFIX."user`(`id`)
@@ -914,7 +892,7 @@ define('DEBUG',         false);";
                     `subject`               VARCHAR(255) NOT NULL, 
                     `description`           TEXT NOT NULL,
                     `assigned_id`           INT NULL,
-                    `status_id`             INT NOT NULL DEFAULT '1',
+                    `status_id`             INT NULL,
                     `milestone_id`          INT NULL,
                     `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
                     `created_id`            INT NULL,

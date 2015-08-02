@@ -6,29 +6,25 @@
     {% if tickets|length > 0 %}
         <div class="table-responsive">
             <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Status</th>
-                        <th>Subject</th>
-                        <th>Assigned To</th>
-                        <th>Milestone</th>
-                        <th>Comments</th>
-                        <th>Created By</th>
-                        <th>Created</th>
-                    </tr>
-                </thead>
                 <tbody>
                 {% for ticket in tickets %}
                     <tr>
-                        <td>{{ ticket.id }}</td>
-                        <td>{{ ticket.status_name }}</td>
-                        <td><a href="tickets.php?ticket={{ ticket.id }}">{{ ticket.subject }}</a></td>
+                        <td><span class="label label-default">{{ ticket.id }}</span></td>
+                        <td class="subject">
+                            <a href="tickets.php?ticket={{ ticket.id }}">{{ ticket.subject }}</a>
+                            <span class="details">{{ ticket.milestone_name }}</span>
+                        </td>
                         <td>{{ ticket.assigned_name }}</td>
-                        <td>{{ ticket.milestone_name }}</td>
-                        <td>{{ ticket.comments_count }}</td>
-                        <td>{{ ticket.created_by }}</td>
+                        <td>
+                            <div class="notification-icon">
+                                <span class="glyphicon glyphicon-comment"></span>
+                                <span class="badge">{{ ticket.comments_count }}</span>
+                            </div>
+                        </td>
                         <td>{{ ticket.created }}</td>
+                        <td class="status">
+                            <h4><span class="label" style="background-color:#{{ ticket.status_color }}">{{ ticket.status_name }}</span></h4>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

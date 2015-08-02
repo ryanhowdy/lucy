@@ -114,6 +114,35 @@ body {
   height: 200px;
   min-height: 200px;
 }
+td.subject > a {
+  font-size: 18px;
+}
+td.subject > .details {
+  display: block;
+  font-size: 12px;
+}
+td.status > h4 {
+  margin: 0;
+}
+td.status > h4 > .label {
+  display: inline-block;
+  min-width: 120px;
+  padding: .4em 1.4em .3em;
+}
+.notification-icon {
+  position: relative;
+  text-align: center;
+}
+.notification-icon .glyphicon {
+  font-size: 23px;
+  color: gray;
+}
+.notification-icon .badge {
+  background-color: #333;
+  position: absolute;
+  top: -5px;
+  margin-left: -11px;
+}
 #user-sidebar {
   text-align: center;
 }

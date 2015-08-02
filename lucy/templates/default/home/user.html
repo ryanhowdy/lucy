@@ -2,6 +2,7 @@
     <div class="container-fluid main-container">
 
         <div class="row">
+
             <div id="user-sidebar" class="col-sm-3">
                 <img src="https://placehold.it/150x150"/>
                 <h2>{{ name }}</h2>
@@ -10,10 +11,27 @@
                     <li class="joined">{{ joindate }}</li>
                 </ul>
             </div>
+
             <div class="col-sm-9">
                 <ul class="nav nav-tabs">
                     <li role="presentation" class="active"><a href="#">Participation</a></li>
                 </ul>
+
+                <p>&nbsp;</p>
+
+                <div class="panel panel-default">
+                    <div class="panel-heading">Latest Activity</div>
+                    <div class="list-group">
+                        {% for activity in activities %}
+                        <a href="{{ activity.link }}" class="list-group-item">
+                            <span class="badge">{{ activity.points }}</span>
+                            <h4 class="list-group-item-heading">{{ activity.category }}</h4>
+                            <p class="list-group-item-text">{{ activity.reason }}</p>
+                        </a>
+                        {% endfor %}
+                    </div><!--/list-group-->
+                </div><!--/panel-->
             </div>
+
         </div>
     </div> <!--/.container-fluid .main-container-->

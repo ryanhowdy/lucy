@@ -7,11 +7,19 @@
             <div id="ticket-main" class="col-sm-9">
                 {% if logged_in %}<a class="btn btn-default pull-right" href="?edit={{ id }}">Edit</a>{% endif %}
 
+                {% if message|length > 0 %}
+                    <div class="alert alert-{{ message.type }}" role="alert">
+                        <p><strong>{{ message.title }}</strong></p>
+                    {% for msg in message.messages %}
+                        <p>{{ msg }}</p>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+
                 <h1>
                     {{ subject }}
                     <small>#{{ id }}</small>
                 </h1>
-                <h3><span class="label label-{{ status }}">{{ status }}</span></h3>
                 <h3>{% autoescape false %}{{ created_header }}{% endautoescape %}</h3>
                 <p class="description">{% autoescape false %}{{ description }}{% endautoescape %}</p>
 
@@ -31,11 +39,11 @@
                     <div class="panel panel-default">
                         <div class="panel-body">
 
-                        {% if form_errors|length > 0 %}
-                            <div class="alert alert-danger" role="alert">
-                                <p><strong>{{ form_errors.title }}</strong></p>
-                            {% for error in form_errors.errors %}
-                                <p>{{ error }}</p>
+                        {% if comment_message|length > 0 %}
+                            <div class="alert alert-{{ comment_message.type }}" role="alert">
+                                <p><strong>{{ comment_message.title }}</strong></p>
+                            {% for msg in comment_message.messages %}
+                                <p>{{ msg }}</p>
                             {% endfor %}
                             </div>
                         {% endif %}
@@ -67,6 +75,10 @@
             </div>
             <div id="ticket-details" class="col-sm-3">
                 <ul class="list-unstyled">
+                    <li>
+                        <b>Status</b>
+                        <h4><span class="label" style="background-color:#{{ status_color }}">{{ status_name }}</span></h4>
+                    </li>
                     {% if assignee_id %}
                     <li>
                         <b>Assigned To</b>

@@ -10,7 +10,7 @@
  */
 class Page
 {
-    private $lucyError;
+    private $error;
     private $currentPage;
     private $pageLkup;
 
@@ -21,7 +21,7 @@ class Page
      */
     public function __construct ($currentPage)
     {
-        $this->lucyError = Error::getInstance();
+        $this->error = Error::getInstance();
 
         // Ensure that the site has been installed first
         if (!file_exists('config.php'))
@@ -68,7 +68,7 @@ class Page
         }
         catch (Exception $e)
         {
-            $this->lucyError->add(array(
+            $this->error->add(array(
                 'title'   => _('Database Error.'),
                 'message' => _('Could not get site configuration.'),
                 'object'  => $e,
@@ -77,6 +77,7 @@ class Page
                 'sql'     => ORM::getLastQuery(),
             ));
 
+            $this->error->displayError();
             return false;
         }
 
@@ -84,6 +85,7 @@ class Page
         $links = $this->getNavigationLinks();
         if ($links === false)
         {
+            $this->error->displayError();
             return false;
         }
 
@@ -101,10 +103,21 @@ class Page
         if ($user->isLoggedIn())
         {
             $params['logged_in'] = $user->name;
+
+            // Set User page title to user's name
+            if ($this->currentPage == 'user')
+            {
+                $params['page_title'] = $user->name;
+            }
         }
 
         // Display the header
         $this->displayTemplate('global', 'header', $params);
+        if ($this->error->hasError())
+        {
+            $this->error->displayError();
+            return;
+        }
 
         return true;
     }
@@ -189,7 +202,7 @@ class Page
         }
         catch (Exception $e)
         {
-            $this->lucyError->add(array(
+            $this->error->add(array(
                 'title'   => _('Database Error.'),
                 'message' => _('Could not get module list.'),
                 'object'  => $e,

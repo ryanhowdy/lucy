@@ -111,6 +111,7 @@ class TicketsController
             ->select('t.*')
             ->select('u.name', 'created_by')
             ->select('s.name', 'status_name')
+            ->select('s.color', 'status_color')
             ->select('m.name', 'milestone_name')
             ->select('ua.name', 'assigned_name')
             ->select_expr('COUNT(tc.id)', 'comments_count')
@@ -267,7 +268,7 @@ class TicketsController
     {
         $validator = new FormValidator();
 
-        $errors = $validator->validate($_POST, $this->getProfile('new_ticket'));
+        $errors = $validator->validate($_POST, $this->getProfile('NEW_TICKET'));
         if ($errors !== true)
         {
             header("Location: tickets.php?new");
@@ -367,16 +368,27 @@ class TicketsController
 
         $validator = new FormValidator();
 
-        // Get any previous form errors
-        $formErrors = array();
+        $message        = array();
+        $commentMessage = array();
+
+        // Get any previous form errors (from comments)
         if (isset($_SESSION['form_errors']))
         {
-            $formErrors['title'] = _('There was a problem with your form.');
+            $commentMessage['title'] = _('There was a problem with your form.');
+            $commentMessage['type']  = 'danger';
 
             if (isset($_SESSION['form_errors']['errors']))
             {
-                $formErrors['errors'] = $_SESSION['form_errors']['errors'];
+                $commentMessage['messages'] = $_SESSION['form_errors']['errors'];
             }
+        }
+
+        // Get any success messages
+        if (isset($_SESSION['success']))
+        {
+            $message['title']    = _('Congratulations');
+            $message['type']     = 'success';
+            $message['messages'] = array($_SESSION['success']);
         }
 
         try
@@ -401,11 +413,14 @@ class TicketsController
             ->tableAlias('t')
             ->select('t.*')
             ->select('c.name', 'created_by')
+            ->select('s.name', 'status_name')
+            ->select('s.color', 'status_color')
             ->select('m.name', 'milestone_name')
             ->select('m.due', 'milestone_due')
             ->select('ua.name', 'assigned_name')
             ->join(DB_PREFIX.'user', array('t.created_id', '=', 'c.id'), 'c')
             ->left_outer_join(DB_PREFIX.'user', array('t.assigned_id', '=', 'ua.id'), 'ua')
+            ->left_outer_join(DB_PREFIX.'ticket_status', array('t.status_id', '=', 's.id'), 's')
             ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
             ->findOne($_GET['ticket']);
 
@@ -439,20 +454,23 @@ class TicketsController
         }
 
         $params = array(
-            'id'             => $ticket->id,
-            'subject'        => $ticket->subject,
-            'created_header' => $createdHeader,
-            'description'    => $description,
-            'status'         => $ticket->status,
-            'assignee_id'    => $ticket->assigned_id,
-            'assigned_name'  => $ticket->assigned_name,
-            'milestone_id'   => $ticket->milestone_id,
-            'milestone_name' => $ticket->milestone_name,
-            'milestone_due'  => $ticket->milestone_due,
-            'created'        => $ticket->created,
-            'updated'        => $ticket->updated,
-            'comments'       => $comments,
-            'form_errors'    => $formErrors,
+            'id'              => $ticket->id,
+            'subject'         => $ticket->subject,
+            'created_header'  => $createdHeader,
+            'description'     => $description,
+            'status'          => $ticket->status,
+            'assignee_id'     => $ticket->assigned_id,
+            'assigned_name'   => $ticket->assigned_name,
+            'status_name'     => $ticket->status_name,
+            'status_color'    => $ticket->status_color,
+            'milestone_id'    => $ticket->milestone_id,
+            'milestone_name'  => $ticket->milestone_name,
+            'milestone_due'   => $ticket->milestone_due,
+            'created'         => $ticket->created,
+            'updated'         => $ticket->updated,
+            'comment_message' => $commentMessage,
+            'comments'        => $comments,
+            'message'         => $message,
         );
 
         if ($this->user->isLoggedIn())
@@ -462,14 +480,8 @@ class TicketsController
         }
 
         $page->displayHeader(array(
-            'js_code' => $validator->getJsValidation($this->getProfile('comment')),
+            'js_code' => $validator->getJsValidation($this->getProfile('COMMENT')),
         ));
-
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
 
         $page->displayTemplate('tickets', 'ticket', $params);
         if ($this->error->hasError())
@@ -479,11 +491,13 @@ class TicketsController
         }
 
         $page->displayFooter();
-        if ($this->error->hasError())
+
+        if (isset($_SESSION['success']))
         {
-            $this->error->displayError();
-            return;
+            unset($_SESSION['success']);
         }
+
+        return;
     }
 
     /**
@@ -495,7 +509,7 @@ class TicketsController
     {
         $validator = new FormValidator();
 
-        $errors = $validator->validate($_POST, $this->getProfile('comment'));
+        $errors = $validator->validate($_POST, $this->getProfile('COMMENT'));
         if ($errors !== true)
         {
             header("Location: tickets.php?ticket=".(int)$_GET['ticket']);
@@ -640,16 +654,26 @@ class TicketsController
             );
         }
 
+        // get the configured ticket status class
+        //$class = "\\Ticket\\Status\\".TICKET_STATUS_CLASS;
+        //$tks   = new $class();
+        $tks = \Ticket\Status::build();
+
+        // Get statuses
+        $statuses = $tks->getNextStatuses($ticket->status_id);
+
         $params = array(
             'user_id'         => $this->user->id,
             'milestone_label' => _('Milestone'),
             'assignees'       => $assignees,
             'milestones'      => $milestones,
+            'statuses'        => $statuses,
             'form_errors'     => $formErrors,
             'values'          => array(
                 'ticket_id'   => $ticket->id,
                 'subject'     => $ticket->subject,
                 'description' => $ticket->description,
+                'status'      => $ticket->status_id,
                 'assignee'    => $ticket->assigned_id,
                 'milestone'   => $ticket->milestone_id,
             ),
@@ -684,12 +708,14 @@ class TicketsController
      */
     function displayEditTicketSubmit ()
     {
+        $page = new Page('tickets');
+
         $validator = new FormValidator();
 
-        $errors = $validator->validate($_POST, $this->getProfile('new_ticket'));
+        $errors = $validator->validate($_POST, $this->getProfile('NEW_TICKET'));
         if ($errors !== true)
         {
-            header("Location: tickets.php");
+            header("Location: tickets.php?edit=".$_POST['edit']);
             return;
         }
 
@@ -723,13 +749,14 @@ class TicketsController
 
         try
         {
-            $ticket = ORM::forTable(DB_PREFIX.'ticket')->findOne($_GET['id']);
+            $ticket = ORM::forTable(DB_PREFIX.'ticket')->findOne($_GET['edit']);
 
-            $ticket->set(array(
-                'subject'     => $_POST['subject'],
-                'description' => $_POST['description'],
-                'updated_id'  => $_POST['user_id'],
-            ));
+            $originalTicket = $ticket->asArray();
+
+            $ticket->subject     = $_POST['subject'];
+            $ticket->description = $_POST['description'];
+            $ticket->status_id   = $_POST['status_id'];
+            $ticket->updated_id  = $_POST['user_id'];
 
             // assignee
             if (isset($_POST['assigned_id']) && !empty($_POST['assigned_id']))
@@ -757,7 +784,26 @@ class TicketsController
                 'sql'     => ORM::getLastQuery(),
             ));
 
-            return false;
+            $page->displayHeader();
+            $this->error->displayError();
+            $page->displayFooter();
+            return;
+        }
+
+        $userActivity = new UserActivity();
+        $userActivity->handleTicketUpdate($originalTicket, $_POST);
+
+        if ($userActivity->currentUserGotPoints)
+        {
+            $_SESSION['success'] = $userActivity->lastPointsReason;
+        }
+
+        if ($this->error->hasError())
+        {
+            $page->displayHeader();
+            $this->error->displayError();
+            $page->displayFooter();
+            return;
         }
 
         if (isset($_SESSION['form_errors']))
@@ -765,7 +811,8 @@ class TicketsController
             unset($_SESSION['form_errors']);
         }
 
-        header("Location: tickets.php?ticket=".$_GET['id']);
+        header("Location: tickets.php?ticket=".$_GET['edit']);
+        return;
     }
 
     /**
@@ -857,7 +904,7 @@ class TicketsController
     function getProfile ($name)
     {
         $profile = array(
-            'new_ticket' => array(
+            'NEW_TICKET' => array(
                 'constraints' => array(
                     'subject' => array(
                         'required' => 1,
@@ -868,6 +915,9 @@ class TicketsController
                     'email' => array(
                         'format' => '/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/',
                     ),
+                    'status_id' => array(
+                        'format' => '/^[0-9]+$/',
+                    ),
                     'assignee_id' => array(
                         'format' => '/^[0-9]+$/',
                     ),
@@ -876,7 +926,7 @@ class TicketsController
                     ),
                 ),
             ),
-            'comment' => array(
+            'COMMENT' => array(
                 'constraints' => array(
                     'email' => array(
                         'format' => '/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/',
