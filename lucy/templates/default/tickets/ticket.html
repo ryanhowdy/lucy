@@ -23,17 +23,28 @@
                 <h3>{% autoescape false %}{{ created_header }}{% endautoescape %}</h3>
                 <p class="description">{% autoescape false %}{{ description }}{% endautoescape %}</p>
 
+                <div class="comment-listing container">
                 {% for comment in comments %}
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <b>{% autoescape false %}{{ comment.name }}{% endautoescape %}</b>
-                            <small>{{ comment.date }}</small>
+                    <div class="row">
+                        <div class="col-sm-1">
+                            <div class="thumbnail">
+                                <img class="img-responsive user-photo" src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png">
+                            </div>
                         </div>
-                        <div class="panel-body">
-                            {% autoescape false %}{{ comment.comment }}{% endautoescape %}
+                        <div class="col-sm-11">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <b>{% autoescape false %}{{ comment.name }}{% endautoescape %}</b>
+                                    <small>{{ comment.date }}</small>
+                                </div>
+                                <div class="panel-body">
+                                    {% autoescape false %}{{ comment.comment }}{% endautoescape %}
+                                </div>
+                            </div><!--/.panel-->
                         </div>
-                    </div>
+                    </div><!--/.row-->
                 {% endfor %}
+                </div><!--/.comment-listing-->
 
                 <form method="post" action="tickets.php?ticket={{ id }}">
                     <div class="panel panel-default">

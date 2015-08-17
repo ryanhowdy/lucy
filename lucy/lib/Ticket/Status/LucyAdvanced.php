@@ -34,6 +34,37 @@ class LucyAdvanced implements \Ticket\StatusInterface
     }
 
     /**
+     * getOpenStatuses 
+     * 
+     * Returns an array of statuses considered 'Opened'.
+     *   3 New
+     *   4 Accepted
+     *   6 Assigned
+     *   7 Started
+     *   9 Reopened
+     * 
+     * @return array
+     */
+    public function getOpenStatuses ()
+    {
+        return array(3, 4, 6, 7, 9);
+    }
+
+    /**
+     * getClosedStatuses 
+     * 
+     * Returns an array of statuses considered 'Closed'.
+     *   5 Rejected
+     *   8 Resolved
+     * 
+     * @return array
+     */
+    public function getClosedStatuses ()
+    {
+        return array(5, 8);
+    }
+
+    /**
      * getNextStatuses 
      * 
      * @param string  $currentStatus 

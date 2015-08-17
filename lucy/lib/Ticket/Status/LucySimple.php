@@ -48,6 +48,30 @@ class LucySimple implements \Ticket\StatusInterface
     }
 
     /**
+     * getOpenStatuses 
+     * 
+     * Returns an array of statuses considered 'Opened'.
+     * 
+     * @return array
+     */
+    public function getOpenStatuses ()
+    {
+        return array(1);
+    }
+
+    /**
+     * getClosedStatuses 
+     * 
+     * Returns an array of statuses considered 'Closed'.
+     * 
+     * @return array
+     */
+    public function getClosedStatuses ()
+    {
+        return array(2);
+    }
+
+    /**
      * wasTicketAccepted 
      * 
      * A ticket is considered accepted when it gets assigned.

@@ -106,6 +106,16 @@ class TicketsController
             return false;
         }
 
+        // Get the open/closed status ids
+        $tks = \Ticket\Status::build();
+
+        $statusIds = $tks->GetOpenStatuses();
+        if (isset($_GET['closed-only']))
+        {
+            $statusIds = $tks->GetClosedStatuses();
+        }
+
+        // Get tickets
         $tickets = ORM::forTable(DB_PREFIX.'ticket')
             ->tableAlias('t')
             ->select('t.*')
@@ -120,14 +130,44 @@ class TicketsController
             ->left_outer_join(DB_PREFIX.'ticket_status', array('t.status_id', '=', 's.id'), 's')
             ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
             ->left_outer_join(DB_PREFIX.'ticket_comment', array('t.id', '=', 'tc.ticket_id'), 'tc')
+            ->where_in('status_id', $statusIds)
             ->order_by_asc('id')
             ->group_by('t.id')
             ->findArray();
 
+        // authors
+        $authors = array();
+
+        // Add zero class to tickets that have no comments
+        for ($i = 0; $i < count($tickets); $i++)
+        {
+            $authors[ $tickets[$i]['created_id'] ] = array(
+                'id'    => $tickets[$i]['created_id'],
+                'value' => $tickets[$i]['created_by'],
+            );
+
+            $tickets[$i]['comments_class'] = '';
+
+            if ($tickets[$i]['comments_count'] == 0)
+            {
+                $tickets[$i]['comments_class'] = 'zero';
+            }
+        }
+
         $params = array(
             'new_label' => _('New Ticket'),
+            'authors'   => $authors,
             'tickets'   => $tickets,
         );
+
+        // open/closed only?
+        $params['open_class'] = 'active';
+        if (isset($_GET['closed-only']))
+        {
+            unset($params['open_class']);
+
+            $params['closed_class'] = 'active';
+        }
 
         $page->displayTemplate('tickets', 'main', $params);
         if ($this->error->hasError())
@@ -655,8 +695,6 @@ class TicketsController
         }
 
         // get the configured ticket status class
-        //$class = "\\Ticket\\Status\\".TICKET_STATUS_CLASS;
-        //$tks   = new $class();
         $tks = \Ticket\Status::build();
 
         // Get statuses

@@ -13,6 +13,9 @@ namespace Ticket;
 interface StatusInterface
 {
     public function getNextStatuses ($currentStatus = null);
+    public function getOpenStatuses ();
+    public function getClosedStatuses ();
+
     public function wasTicketAccepted ($ticket, $newData);
     public function wasTicketResolvedByUser ($ticket, $newData, $userId);
 }

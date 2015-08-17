@@ -1,14 +1,20 @@
+//
+// Variables
+// --------------------------------------------------
 @green      : #79b933;
 @light-blue : #bde0ff;
 @blue       : #388cba;
 @gray       : #333;
 @orange     : #ff7400;
 
+
+//
+// Global
+// --------------------------------------------------
 body
 {
     background-color: @gray;
 }
-
 .container-fluid
 {
     margin-left: 15px;
@@ -23,12 +29,10 @@ body
         margin-bottom: 30px;
     }
 }
-
 .page-title > h3
 {
     color: #b3b3b3;
 }
-
 .header
 {
     padding: 0;
@@ -95,24 +99,58 @@ body
         }
     }
 }
-
 .main-container {
     background-color: #fff;
     padding: 25px;
 }
-
 .blank-state {
     padding: 50px 0;
     text-align: center;
 }
-
 .footer {
     color: #bbb;
     padding-top: 20px;
     text-align: right;
 }
 
+
+//
 // Tickets
+// --------------------------------------------------
+#ticket-listing
+{
+    th
+    {
+        .nav-pills
+        {
+            float: left;
+            width: 100%;
+
+            a
+            {
+                color: #666;
+                font-size: 12px;
+                font-weight: normal;
+                padding: 4px 12px;
+            }
+            li.active > a,
+            li.active > a:focus,
+            li.active > a:hover
+            {
+                background-color: transparent;
+                color: #333;
+                font-weight: bold;
+            }
+            li
+            {
+                .dropdown-menu
+                {
+                    padding: 0 10px;
+                }
+            }
+        }
+    }
+}
 #ticket-page
 {
     .container
@@ -129,16 +167,64 @@ body
         margin: 0 0 50px 0;
     }
 
-    // This is the comments blocks
     .panel
     {
-        margin: 30px 0 20px 0;
-        max-width: 800px;
-
         > .panel-heading > small
         {
             color: #999;
             padding-left: 10px;
+        }
+    }
+    form
+    {
+        .panel
+        {
+            margin: 30px 0 20px 0;
+            max-width: 800px;
+        }
+    }
+    .comment-listing
+    {
+        margin: 0;
+        padding: 0;
+        max-width: 800px;
+
+        .thumbnail
+        {
+            padding: 0px;
+        }
+        .panel
+        {
+            position: relative;
+            margin-bottom: 40px;
+
+            > .panel-heading:after,
+            > .panel-heading:before
+            {
+                position: absolute;
+                top: 11px;
+                left: -16px;
+                right: 100%;
+                width: 0;
+                height: 0;
+                display: block;
+                content: " ";
+                border-color: transparent;
+                border-style: solid solid outset;
+                pointer-events: none;
+            }
+            > .panel-heading:after
+            {
+                border-width: 7px;
+                border-right-color: #f7f7f7;
+                margin-top: 1px;
+                margin-left: 2px;
+            }
+            > .panel-heading:before
+            {
+                border-right-color: #ddd;
+                border-width: 8px;
+            }
         }
     }
 }
@@ -165,12 +251,13 @@ body
     }
 }
 
+#new-ticket,
 #edit-ticket
 {
     #description
     {
-        height: 200px;
-        min-height: 200px;
+        height: 250px;
+        min-height: 250px;
     }
 }
 td.subject
@@ -182,7 +269,13 @@ td.subject
     > .details
     {
         display: block;
-        font-size: 12px;
+        font-size: 11px;
+        padding: 4px 0 0 0;
+
+        a
+        {
+            color: #333;
+        }
     }
 }
 td.status
@@ -215,9 +308,16 @@ td.status
         top: -5px;
         margin-left: -11px;
     }
+    .zero
+    {
+        display: none;
+    }
 }
 
+
+//
 // User
+// --------------------------------------------------
 #user-sidebar
 {
     text-align: center;

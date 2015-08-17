@@ -79,6 +79,26 @@ body {
   padding-top: 20px;
   text-align: right;
 }
+#ticket-listing th .nav-pills {
+  float: left;
+  width: 100%;
+}
+#ticket-listing th .nav-pills a {
+  color: #666;
+  font-size: 12px;
+  font-weight: normal;
+  padding: 4px 12px;
+}
+#ticket-listing th .nav-pills li.active > a,
+#ticket-listing th .nav-pills li.active > a:focus,
+#ticket-listing th .nav-pills li.active > a:hover {
+  background-color: transparent;
+  color: #333;
+  font-weight: bold;
+}
+#ticket-listing th .nav-pills li .dropdown-menu {
+  padding: 0 10px;
+}
 #ticket-page .container {
   margin-left: 0;
 }
@@ -88,13 +108,49 @@ body {
 #ticket-main > p.description {
   margin: 0 0 50px 0;
 }
-#ticket-main .panel {
-  margin: 30px 0 20px 0;
-  max-width: 800px;
-}
 #ticket-main .panel > .panel-heading > small {
   color: #999;
   padding-left: 10px;
+}
+#ticket-main form .panel {
+  margin: 30px 0 20px 0;
+  max-width: 800px;
+}
+#ticket-main .comment-listing {
+  margin: 0;
+  padding: 0;
+  max-width: 800px;
+}
+#ticket-main .comment-listing .thumbnail {
+  padding: 0px;
+}
+#ticket-main .comment-listing .panel {
+  position: relative;
+  margin-bottom: 40px;
+}
+#ticket-main .comment-listing .panel > .panel-heading:after,
+#ticket-main .comment-listing .panel > .panel-heading:before {
+  position: absolute;
+  top: 11px;
+  left: -16px;
+  right: 100%;
+  width: 0;
+  height: 0;
+  display: block;
+  content: " ";
+  border-color: transparent;
+  border-style: solid solid outset;
+  pointer-events: none;
+}
+#ticket-main .comment-listing .panel > .panel-heading:after {
+  border-width: 7px;
+  border-right-color: #f7f7f7;
+  margin-top: 1px;
+  margin-left: 2px;
+}
+#ticket-main .comment-listing .panel > .panel-heading:before {
+  border-right-color: #ddd;
+  border-width: 8px;
 }
 #ticket-details > ul {
   background-color: #f3f3f3;
@@ -110,16 +166,21 @@ body {
 #ticket-details > ul > li > b {
   display: block;
 }
+#new-ticket #description,
 #edit-ticket #description {
-  height: 200px;
-  min-height: 200px;
+  height: 250px;
+  min-height: 250px;
 }
 td.subject > a {
   font-size: 18px;
 }
 td.subject > .details {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
+  padding: 4px 0 0 0;
+}
+td.subject > .details a {
+  color: #333;
 }
 td.status > h4 {
   margin: 0;
@@ -142,6 +203,9 @@ td.status > h4 > .label {
   position: absolute;
   top: -5px;
   margin-left: -11px;
+}
+.notification-icon .zero {
+  display: none;
 }
 #user-sidebar {
   text-align: center;
