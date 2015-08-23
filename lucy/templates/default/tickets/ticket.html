@@ -25,7 +25,7 @@
 
                 <div class="comment-listing container">
                 {% for comment in comments %}
-                    <div class="row">
+                    <div class="row {{ comment.type }}">
                         <div class="col-sm-1">
                             <div class="thumbnail">
                                 <img class="img-responsive user-photo" src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png">

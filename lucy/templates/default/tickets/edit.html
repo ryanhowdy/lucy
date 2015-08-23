@@ -34,7 +34,6 @@
                     <div class="form-group">
                         <label for="assigned_id">Assignee</label>
                         <select class="form-control" id="assigned_id" name="assigned_id">
-                            <option></option>
                         {% for assignee in assignees %}
                             <option {% if assignee.id == values.assignee %}selected="selected"{% endif %} value="{{ assignee.id }}">{{ assignee.label }}</option>
                         {% endfor %}
@@ -43,7 +42,6 @@
                     <div class="form-group">
                         <label for="milestone">{{ milestone_label }}</label>
                         <select class="form-control" id="milestone" name="milestone">
-                            <option></option>
                         {% for milestone in milestones %}
                             <option {% if milestone.id == values.milestone %}selected="selected"{% endif %} value="{{ milestone.id }}">{{ milestone.label }}</option>
                         {% endfor %}

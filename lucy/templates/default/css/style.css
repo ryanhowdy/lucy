@@ -77,7 +77,12 @@ body {
 .footer {
   color: #bbb;
   padding-top: 20px;
-  text-align: right;
+  text-align: center;
+}
+.footer > img {
+  width: 102px;
+  margin: 0 0 5px 0;
+  opacity: .3;
 }
 #ticket-listing th .nav-pills {
   float: left;
@@ -117,16 +122,17 @@ body {
   max-width: 800px;
 }
 #ticket-main .comment-listing {
+  border-top: 1px solid #ddd;
   margin: 0;
-  padding: 0;
   max-width: 800px;
+  padding: 20px 0 0 0;
+  width: auto;
 }
 #ticket-main .comment-listing .thumbnail {
   padding: 0px;
 }
 #ticket-main .comment-listing .panel {
   position: relative;
-  margin-bottom: 40px;
 }
 #ticket-main .comment-listing .panel > .panel-heading:after,
 #ticket-main .comment-listing .panel > .panel-heading:before {
@@ -151,6 +157,30 @@ body {
 #ticket-main .comment-listing .panel > .panel-heading:before {
   border-right-color: #ddd;
   border-width: 8px;
+}
+#ticket-main .comment-listing .details .thumbnail {
+  display: none;
+}
+#ticket-main .comment-listing .details .panel {
+  border: none;
+  position: static;
+}
+#ticket-main .comment-listing .details .panel > .panel-heading:after,
+#ticket-main .comment-listing .details .panel > .panel-heading:before {
+  display: none;
+}
+#ticket-main .comment-listing .details .panel > .panel-heading {
+  display: none;
+}
+#ticket-main .comment-listing .details .panel > .panel-body {
+  padding: 0;
+}
+#ticket-main .comment-listing .details .panel > .panel-body span.glyphicon {
+  padding: 0 15px;
+}
+#ticket-main .comment-listing .details .panel > .panel-body small {
+  color: #999;
+  padding: 0 0 0 15px;
 }
 #ticket-details > ul {
   background-color: #f3f3f3;

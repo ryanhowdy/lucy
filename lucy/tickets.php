@@ -449,20 +449,35 @@ class TicketsController
         }
 
         // Get ticket info
-        $ticket = ORM::forTable(DB_PREFIX.'ticket')
-            ->tableAlias('t')
-            ->select('t.*')
-            ->select('c.name', 'created_by')
-            ->select('s.name', 'status_name')
-            ->select('s.color', 'status_color')
-            ->select('m.name', 'milestone_name')
-            ->select('m.due', 'milestone_due')
-            ->select('ua.name', 'assigned_name')
-            ->join(DB_PREFIX.'user', array('t.created_id', '=', 'c.id'), 'c')
-            ->left_outer_join(DB_PREFIX.'user', array('t.assigned_id', '=', 'ua.id'), 'ua')
-            ->left_outer_join(DB_PREFIX.'ticket_status', array('t.status_id', '=', 's.id'), 's')
-            ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
-            ->findOne($_GET['ticket']);
+        try
+        {
+            $ticket = ORM::forTable(DB_PREFIX.'ticket')
+                ->tableAlias('t')
+                ->select('t.*')
+                ->select('c.name', 'created_by')
+                ->select('s.name', 'status_name')
+                ->select('s.color', 'status_color')
+                ->select('m.name', 'milestone_name')
+                ->select('m.due', 'milestone_due')
+                ->select('ua.name', 'assigned_name')
+                ->join(DB_PREFIX.'user', array('t.created_id', '=', 'c.id'), 'c')
+                ->left_outer_join(DB_PREFIX.'user', array('t.assigned_id', '=', 'ua.id'), 'ua')
+                ->left_outer_join(DB_PREFIX.'ticket_status', array('t.status_id', '=', 's.id'), 's')
+                ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
+                ->findOne($_GET['ticket']);
+        }
+        catch (Exception $e)
+        {
+            $this->error->add(array(
+                'title'   => _('Database Error.'),
+                'message' => _('Could not get Ticket.'),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+            ));
+
+            return false;
+        }
 
         if ($ticket === false)
         {
@@ -490,8 +505,117 @@ class TicketsController
 
             $comments[$i]['name']    = '<a href="user.php?id='.$c['updated_id'].'">'.$c['updated_by'].'</a>';
             $comments[$i]['date']    = $c['updated'];
-            $comments[$i]['comment'] = $this->parseComment( $c['comment']);
+            $comments[$i]['comment'] = $this->parseComment($c['comment']);
         }
+
+        // Get Ticket update History
+        $history = ORM::forTable(DB_PREFIX.'ticket_history')
+            ->tableAlias('h')
+            ->select('h.*')
+            ->select('s.name', 'status_name')
+            ->select('s.color', 'status_color')
+            ->select('m.name', 'milestone_name')
+            ->select('m.due', 'milestone_due')
+            ->select('ua.name', 'assigned_name')
+            ->where('h.ticket_id', $_GET['ticket'])
+            ->left_outer_join(DB_PREFIX.'ticket_status', array('h.status_id', '=', 's.id'), 's')
+            ->left_outer_join(DB_PREFIX.'ticket_milestone', array('h.milestone_id', '=', 'm.id'), 'm')
+            ->left_outer_join(DB_PREFIX.'user', array('h.assigned_id', '=', 'ua.id'), 'ua')
+            ->order_by_desc('h.created')
+            ->findArray();
+
+        $prevSubject       = $ticket->subject;
+        $prevDescription   = $ticket->description;
+        $prevStatusName    = $ticket->status_name;
+        $prevStatusColor   = $ticket->status_color;
+        $prevAssignedId    = $ticket->assigned_id;
+        $prevAssignedName  = $ticket->assigned_name;
+        $prevMilestoneId   = $ticket->milestone_id;
+        $prevMilestoneName = $ticket->milestone_name;
+
+        for ($i = 0; $i < count($history); $i++)
+        {
+            $h = $history[$i];
+
+            $details = array(
+                'type' => 'details',
+                'date' => $h['created'],
+            );
+
+            if (!is_null($h['subject']))
+            {
+                $details['comment']  = '<span class="glyphicon glyphicon-book"></span> ';
+                $details['comment'] .= sprintf(_("Subject changed from '%s' to '%s'"), '<b>'.$h['subject'].'</b>', '<b>'.$prevSubject.'</b>');
+                $details['comment'] .= ' <small>'.$h['created'].'</small>';
+
+                $comments[] = $details;
+
+                $prevSubject = $h['subject'];
+            }
+            if (!is_null($h['description']))
+            {
+                $details['comment']  = '<span class="glyphicon glyphicon-comment"></span> ';
+                $details['comment'] .= '<a href="#">';
+                $details['comment'] .= sprintf(_("Description updated'"), '<b>'.$h['subject'].'</b>', '<b>'.$prevSubject.'</b>');
+                $details['comment'] .= '</a>';
+                $details['comment'] .= ' <small>'.$h['created'].'</small>';
+
+                $comments[] = $details;
+
+                $prevSubject = $h['subject'];
+            }
+            if (!is_null($h['status_id']))
+            {
+                $from = '<span class="label" style="background-color:#'.$h['status_color'].'">'.$h['status_name'].'</span>';
+                $to   = '<span class="label" style="background-color:#'.$prevStatusColor.'">'.$prevStatusName.'</span>';
+
+                $details['comment']  = '<span class="glyphicon glyphicon-tag"></span> ';
+                $details['comment'] .= sprintf(_("Status changed to %s"), $to);
+                $details['comment'] .= ' <small>'.$h['created'].'</small>';
+
+                $comments[] = $details;
+
+                $prevStatusName  = $h['status_name'];
+                $prevStatusColor = $h['status_color'];
+            }
+            if (!is_null($h['assigned_id']))
+            {
+                $to = '<a href="user.php?id='.$prevAssignedId.'">'.$prevAssignedName.'</a>';
+
+                $details['comment']  = '<span class="glyphicon glyphicon-user"></span> ';
+                $details['comment'] .= sprintf(_("Assigned to %s"), $to);
+                $details['comment'] .= ' <small>'.$h['created'].'</small>';
+
+                $comments[] = $details;
+
+                $prevAssignedId   = $h['assigned_id'];
+                $prevAssignedName = $h['assigned_name'];
+            }
+            if (!is_null($h['milestone_id']))
+            {
+                $to   = '<a href="milestone.php?milestone='.$prevMilestoneId.'">'.$prevMilestoneName.'</a>';
+                $desc = sprintf(_("Added to %s milestone"), $to);
+                if (is_null($prevMilestoneId))
+                {
+                    $to   = '<a href="milestone.php?milestone='.$h['milestone_id'].'">'.$h['milestone_name'].'</a>';
+                    $desc = sprintf(_("Removed from %s milestone"), $to);
+                }
+
+                $details['comment']  = '<span class="glyphicon glyphicon-calendar"></span> ';
+                $details['comment'] .= $desc;
+                $details['comment'] .= ' <small>'.$h['created'].'</small>';
+
+                $comments[] = $details;
+
+                $prevMilestoneId   = $h['milestone_id'];
+                $prevMilestoneName = $h['milestone_name'];
+            }
+        }
+
+        // Sort the comments/details by created
+        usort($comments, function($a, $b) {
+            return strtotime($a['date']) - strtotime($b['date']);
+        });
 
         $params = array(
             'id'              => $ticket->id,
@@ -673,6 +797,7 @@ class TicketsController
         // Get list of all users for assignee
         $users = ORM::forTable(DB_PREFIX.'user')->findMany();
 
+        $assignees = array(array('id' => 'NONE', 'label' => ''));
         foreach ($users as $user)
         {
             $assignees[] = array(
@@ -686,6 +811,7 @@ class TicketsController
             ->where('complete', '0000-00-00')
             ->findMany();
 
+        $milestones = array(array('id' => 'NONE', 'label' => ''));
         foreach ($milestoneRecords as $milestone)
         {
             $milestones[] = array(
@@ -787,25 +913,105 @@ class TicketsController
 
         try
         {
+            // Get the original ticket info
             $ticket = ORM::forTable(DB_PREFIX.'ticket')->findOne($_GET['edit']);
 
             $originalTicket = $ticket->asArray();
 
+            // Save the ticket history
+            $ticketChanged = false;
+            $history = ORM::forTable(DB_PREFIX.'ticket_history')->create();
+
+            // only save the things that changed
+            if ($originalTicket['subject'] !== $_POST['subject'])
+            {
+                $history->subject = $originalTicket['subject'];
+                $ticketChanged    = true;
+            }
+            if ($originalTicket['description'] !== $_POST['description'])
+            {
+                $history->description = $originalTicket['description'];
+                $ticketChanged        = true;
+            }
+            if ($originalTicket['status_id'] !== $_POST['status_id'])
+            {
+                $history->status_id = $originalTicket['status_id'];
+                $ticketChanged      = true;
+            }
+            if ($originalTicket['assigned_id'] !== $_POST['assigned_id'])
+            {
+                // No existing assignee
+                if (empty($originalTicket['assigned_id']))
+                {
+                    if ($_POST['assigned_id'] != 'NONE')
+                    {
+                        $history->assigned_id = 0;
+                        $ticketChanged        = true;
+                    }
+                }
+                // Existing assignee
+                else
+                {
+                    // We are either removing the current assignee or changing it
+                    $history->assigned_id = $originalTicket['assigned_id'];
+                    $ticketChanged        = true;
+                }
+            }
+            if ($originalTicket['milestone_id'] !== $_POST['milestone'])
+            {
+                // No existing milestone
+                if (empty($originalTicket['milestone_id']))
+                {
+                    if ($_POST['milestone'] != 'NONE')
+                    {
+                        $history->milestone_id = 0;
+                        $ticketChanged         = true;
+                    }
+                }
+                else
+                {
+                    $history->milestone_id = $originalTicket['milestone_id'];
+                    $ticketChanged         = true;
+                }
+
+            }
+
+            if ($ticketChanged) {
+                $history->set(array(
+                    'ticket_id'    => $originalTicket['id'],
+                    'created_id'   => $originalTicket['updated_id'],  // NOTE: the logged in user didn't create the history, the previous updated_id did
+                ));
+                $history->set_expr('created', 'UTC_TIMESTAMP()');
+                $history->save();
+            }
+
+            // Save the new ticket updates
             $ticket->subject     = $_POST['subject'];
             $ticket->description = $_POST['description'];
             $ticket->status_id   = $_POST['status_id'];
             $ticket->updated_id  = $_POST['user_id'];
 
-            // assignee
             if (isset($_POST['assigned_id']) && !empty($_POST['assigned_id']))
             {
-                $ticket->assigned_id = $_POST['assigned_id'];
+                if ($_POST['assigned_id'] === 'NONE')
+                {
+                    $ticket->set_expr('assigned_id', 'NULL');
+                }
+                else
+                {
+                    $ticket->assigned_id = $_POST['assigned_id'];
+                }
             }
-
-            // milestone
             if (isset($_POST['milestone']) && !empty($_POST['milestone']))
             {
-                $ticket->milestone_id = $_POST['milestone'];
+                if ($_POST['milestone'] === 'NONE')
+                {
+                    $ticket->set_expr('milestone_id', 'NULL');
+                }
+                else
+                {
+                    $ticket->milestone_id = $_POST['milestone'];
+                }
             }
 
             $ticket->set_expr('updated', 'UTC_TIMESTAMP()');
@@ -957,10 +1163,10 @@ class TicketsController
                         'format' => '/^[0-9]+$/',
                     ),
                     'assignee_id' => array(
-                        'format' => '/^[0-9]+$/',
+                        'format' => '/(^[0-9]+$|^NONE$)?/',
                     ),
                     'milestone_id' => array(
-                        'format' => '/^[0-9]+$/',
+                        'format' => '/^([0-9]+$|^NONE$)?/',
                     ),
                 ),
             ),

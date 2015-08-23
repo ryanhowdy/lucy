@@ -746,6 +746,9 @@ define('DEBUG',         false);";
             //------------------------------------
 
             // Tables with user + other foreign keys
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."discussion_comment`");
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."discussion`");
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_history`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_comment_votes`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket_comment`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."ticket`");
@@ -754,6 +757,7 @@ define('DEBUG',         false);";
 
             // Tables with user foreign keys
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."user_activity`");
+            $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."user_auth_token`");
             $db->exec("DROP TABLE IF EXISTS `".DB_PREFIX."user`");
 
             // No foreign key tables
@@ -820,7 +824,6 @@ define('DEBUG',         false);";
                     `source_code_username`  VARCHAR(255) NULL,
                     `email`                 VARCHAR(100) NOT NULL, 
                     `password`              VARCHAR(255) NOT NULL, 
-                    `token`                 VARCHAR(255) NULL,
                     `birthday`              DATE NULL, 
                     `timezone`              INT NULL,
                     `language`              VARCHAR(6) NOT NULL DEFAULT 'en_US',
@@ -833,6 +836,18 @@ define('DEBUG',         false);";
                     PRIMARY KEY (`id`), 
                     UNIQUE KEY `source_code_username` (`source_code_username`),
                     UNIQUE KEY `email` (`email`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
+            );
+
+            // User Authentication Tokens
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."user_auth_token` (
+                    `id`                    INT NOT NULL AUTO_INCREMENT,
+                    `user_id`               INT NOT NULL,
+                    `token`                 VARCHAR(255) NULL,
+                    `expires`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    PRIMARY KEY (`id`),
+                    FOREIGN KEY (`user_id`) REFERENCES `".DB_PREFIX."user`(`id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
             );
 
@@ -925,6 +940,25 @@ define('DEBUG',         false);";
                 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
             );
 
+            // Ticket History
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ticket_history` (
+                    `id`                    INT NOT NULL AUTO_INCREMENT, 
+                    `ticket_id`             INT NOT NULL,
+                    `subject`               VARCHAR(255) NULL, 
+                    `description`           TEXT NULL,
+                    `assigned_id`           INT NULL,       -- note: no fk cause this could be 0
+                    `status_id`             INT NULL,
+                    `milestone_id`          INT NULL,       -- note: no fk cause this could be 0
+                    `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `created_id`            INT NOT NULL,
+                    PRIMARY KEY (`id`), 
+                    FOREIGN KEY (`ticket_id`)  REFERENCES `".DB_PREFIX."ticket`(`id`),
+                    FOREIGN KEY (`status_id`) REFERENCES `".DB_PREFIX."ticket_status`(`id`),
+                    FOREIGN KEY (`created_id`)  REFERENCES `".DB_PREFIX."user`(`id`)
+                ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
+            );
+
             // Ticket Comment Votes
             $db->exec("
                 CREATE TABLE IF NOT EXISTS `".DB_PREFIX."ticket_comment_votes` (
@@ -938,6 +972,40 @@ define('DEBUG',         false);";
                     FOREIGN KEY (`created_id`) REFERENCES `".DB_PREFIX."user`(`id`)
                 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
             );
+
+            // Discussions
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."discussion` (
+                    `id`                    INT NOT NULL AUTO_INCREMENT, 
+                    `title`                 VARCHAR(255) NOT NULL, 
+                    `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `created_id`            INT NULL,
+                    `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+                    `updated_id`            INT NULL,
+                    PRIMARY KEY (`id`), 
+                    FOREIGN KEY (`created_id`)  REFERENCES `".DB_PREFIX."user`(`id`),
+                    FOREIGN KEY (`updated_id`)  REFERENCES `".DB_PREFIX."user`(`id`)
+                ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
+            );
+
+            // Discussions Comments
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS `".DB_PREFIX."discussion_comment` (
+                    `id`                    INT NOT NULL AUTO_INCREMENT, 
+                    `discussion_id`         INT NOT NULL,
+                    `comment`               TEXT NOT NULL,
+                    `total_votes`           INT NOT NULL DEFAULT '0',
+                    `created`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', 
+                    `created_id`            INT NOT NULL,
+                    `updated`               DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+                    `updated_id`            INT NOT NULL,
+                    PRIMARY KEY (`id`), 
+                    FOREIGN KEY (`discussion_id`)  REFERENCES `".DB_PREFIX."discussion`(`id`),
+                    FOREIGN KEY (`created_id`) REFERENCES `".DB_PREFIX."user`(`id`),
+                    FOREIGN KEY (`updated_id`) REFERENCES `".DB_PREFIX."user`(`id`)
+                ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;"
+            );
+
         }
         catch (Exception $e)
         {

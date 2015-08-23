@@ -110,7 +110,14 @@ body
 .footer {
     color: #bbb;
     padding-top: 20px;
-    text-align: right;
+    text-align: center;
+
+    > img
+    {
+        width: 102px;
+        margin: 0 0 5px 0;
+        opacity: .3;
+    }
 }
 
 
@@ -185,9 +192,11 @@ body
     }
     .comment-listing
     {
+        border-top: 1px solid #ddd;
         margin: 0;
-        padding: 0;
         max-width: 800px;
+        padding: 20px 0 0 0;
+        width: auto;
 
         .thumbnail
         {
@@ -196,7 +205,6 @@ body
         .panel
         {
             position: relative;
-            margin-bottom: 40px;
 
             > .panel-heading:after,
             > .panel-heading:before
@@ -224,6 +232,43 @@ body
             {
                 border-right-color: #ddd;
                 border-width: 8px;
+            }
+        }
+
+        .details
+        {
+            .thumbnail
+            {
+                display: none;
+            }
+            .panel
+            {
+                border: none;
+                position: static;
+
+                > .panel-heading:after,
+                > .panel-heading:before
+                {
+                    display: none;
+                }
+                > .panel-heading
+                {
+                    display: none;
+                }
+                > .panel-body
+                {
+                    padding: 0;
+
+                    span.glyphicon
+                    {
+                        padding: 0 15px;
+                    }
+                    small
+                    {
+                        color: #999;
+                        padding: 0 0 0 15px;
+                    }
+                }
             }
         }
     }

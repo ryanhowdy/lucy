@@ -67,10 +67,18 @@ class User
         {
             $db = ORM::get_db();
 
-            $user = ORM::forTable(DB_PREFIX.'user')
+            $user = ORM::forTable(DB_PREFIX.'user_auth_token')
+                ->tableAlias('t')
+                ->select('u.*')
+                ->select_many(
+                    array('user_auth_token_id' => 't.id'), 
+                    't.token', 
+                    't.expires'
+                )
+                ->join(DB_PREFIX.'user', array('t.user_id', '=', 'u.id'), 'u')
                 ->where(array(
-                    'id'    => $_SESSION['lucy_id'],
-                    'token' => $_SESSION['lucy_token'],
+                    'user_id' => $_SESSION['lucy_id'],
+                    'token'   => $_SESSION['lucy_token'],
                 ))
                 ->findOne();
         }
@@ -91,6 +99,16 @@ class User
         // If we couldn't find the user based on the session data
         // then the session is invalid, lets unset it and exit
         // before saving any user data
+        if ($user === false)
+        {
+            unset($_SESSION['lucy_id']);
+            unset($_SESSION['lucy_token']);
+
+            return true;
+        }
+
+        $user = $user->as_array();
+
         if (empty($user))
         {
             unset($_SESSION['lucy_id']);
@@ -132,19 +150,31 @@ class User
      */
     public function login ($id, $remember = false)
     {
-        $token = uniqid('');
+        $token   = uniqid('');
+        $expires = date('Y-m-d H:i:s', strtotime("+8 hours"));
+
+        if ($remember)
+        {
+            $expires = date('Y-m-d H:i:s', strtotime("+30 day"));
+        }
 
         try
         {
             $db = ORM::get_db();
 
+            // Reset the login attempt count
             $user = ORM::forTable(DB_PREFIX.'user')->findOne($id);
-
-            $user->set(array(
-                'token'          => $token,
-                'login_attempts' => 0,
-            ));
+            $user->set('login_attempts', 0);
             $user->save();
+
+            // Save the auth token
+            $auth = ORM::forTable(DB_PREFIX.'user_auth_token')->create();
+            $auth->set(array(
+                'user_id' => $id,
+                'token'   => $token,
+                'expires' => $expires,
+            ));
+            $auth->save();
         }
         catch (Exception $e)
         {
@@ -166,8 +196,8 @@ class User
         // Save cookie
         if ($remember)
         {
-            setcookie('lucy_id',    $this->id,    time() + (30*(24*3600)), '/'); // 30 days
-            setcookie('lucy_token', $this->token, time() + (30*(24*3600)), '/'); // 30 days
+            setcookie('lucy_id',    $this->id,    strtotime($expires), '/');
+            setcookie('lucy_token', $this->token, strtotime($expires), '/');
         }
 
         $_SESSION['lucy_id']    = $this->id;
@@ -199,7 +229,7 @@ class User
         }
 
         // Session id does not match id in db
-        if ($_SESSION['lucy_id'] !== $this->id)
+        if ($_SESSION['lucy_id'] != $this->id)
         {
             return false;
         }
