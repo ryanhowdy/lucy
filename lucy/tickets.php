@@ -169,7 +169,7 @@ class TicketsController extends Controller
      * 
      * Displays the form for creating a new ticket.
      * 
-     * @return void
+     * @return null|false
      */
     protected function displayNewTicketForm ()
     {
@@ -281,7 +281,7 @@ class TicketsController extends Controller
      * 
      * Handles the submitting of the new ticket form.
      * 
-     * @return void
+     * @return null|false
      */
     protected function displayNewTicketSubmit ()
     {
@@ -379,7 +379,7 @@ class TicketsController extends Controller
      * 
      * Displays a single ticket.
      * 
-     * @return void
+     * @return false|null
      */
     protected function displayTicket ()
     {
@@ -550,7 +550,7 @@ class TicketsController extends Controller
     /**
      * displayAddCommentSubmit 
      * 
-     * @return void
+     * @return null|false
      */
     protected function displayAddCommentSubmit ()
     {
@@ -617,7 +617,7 @@ class TicketsController extends Controller
      * 
      * Prints the from for editting an existing ticket.
      * 
-     * @return void
+     * @return null|false
      */
     protected function displayEditTicketForm ()
     {
@@ -751,7 +751,7 @@ class TicketsController extends Controller
     /**
      * displayEditTicketSubmit 
      * 
-     * @return void
+     * @return null|false
      */
     protected function displayEditTicketSubmit ()
     {
