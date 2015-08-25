@@ -503,111 +503,13 @@ class TicketsController extends Controller
         }
 
         // Get Ticket update History
-        $history = ORM::forTable(DB_PREFIX.'ticket_history')
-            ->tableAlias('h')
-            ->select('h.*')
-            ->select('s.name', 'status_name')
-            ->select('s.color', 'status_color')
-            ->select('m.name', 'milestone_name')
-            ->select('m.due', 'milestone_due')
-            ->select('ua.name', 'assigned_name')
-            ->where('h.ticket_id', $_GET['ticket'])
-            ->left_outer_join(DB_PREFIX.'ticket_status', array('h.status_id', '=', 's.id'), 's')
-            ->left_outer_join(DB_PREFIX.'ticket_milestone', array('h.milestone_id', '=', 'm.id'), 'm')
-            ->left_outer_join(DB_PREFIX.'user', array('h.assigned_id', '=', 'ua.id'), 'ua')
-            ->order_by_desc('h.created')
-            ->findArray();
+        $historyDetails = $this->getTicketHistory($_GET['ticket']);
 
-        $prevSubject       = $ticket->subject;
-        $prevDescription   = $ticket->description;
-        $prevStatusName    = $ticket->status_name;
-        $prevStatusColor   = $ticket->status_color;
-        $prevAssignedId    = $ticket->assigned_id;
-        $prevAssignedName  = $ticket->assigned_name;
-        $prevMilestoneId   = $ticket->milestone_id;
-        $prevMilestoneName = $ticket->milestone_name;
+        // Combine the comments with the history
+        $commentsAndHistory = array_merge($comments, $historyDetails);
 
-        for ($i = 0; $i < count($history); $i++)
-        {
-            $h = $history[$i];
-
-            $details = array(
-                'type' => 'details',
-                'date' => $h['created'],
-            );
-
-            if (!is_null($h['subject']))
-            {
-                $details['comment']  = '<span class="glyphicon glyphicon-book"></span> ';
-                $details['comment'] .= sprintf(_("Subject changed from '%s' to '%s'"), '<b>'.$h['subject'].'</b>', '<b>'.$prevSubject.'</b>');
-                $details['comment'] .= ' <small>'.$h['created'].'</small>';
-
-                $comments[] = $details;
-
-                $prevSubject = $h['subject'];
-            }
-            if (!is_null($h['description']))
-            {
-                $details['comment']  = '<span class="glyphicon glyphicon-comment"></span> ';
-                $details['comment'] .= '<a href="#">';
-                $details['comment'] .= sprintf(_("Description updated'"), '<b>'.$h['subject'].'</b>', '<b>'.$prevSubject.'</b>');
-                $details['comment'] .= '</a>';
-                $details['comment'] .= ' <small>'.$h['created'].'</small>';
-
-                $comments[] = $details;
-
-                $prevSubject = $h['subject'];
-            }
-            if (!is_null($h['status_id']))
-            {
-                $from = '<span class="label" style="background-color:#'.$h['status_color'].'">'.$h['status_name'].'</span>';
-                $to   = '<span class="label" style="background-color:#'.$prevStatusColor.'">'.$prevStatusName.'</span>';
-
-                $details['comment']  = '<span class="glyphicon glyphicon-tag"></span> ';
-                $details['comment'] .= sprintf(_("Status changed to %s"), $to);
-                $details['comment'] .= ' <small>'.$h['created'].'</small>';
-
-                $comments[] = $details;
-
-                $prevStatusName  = $h['status_name'];
-                $prevStatusColor = $h['status_color'];
-            }
-            if (!is_null($h['assigned_id']))
-            {
-                $to = '<a href="user.php?id='.$prevAssignedId.'">'.$prevAssignedName.'</a>';
-
-                $details['comment']  = '<span class="glyphicon glyphicon-user"></span> ';
-                $details['comment'] .= sprintf(_("Assigned to %s"), $to);
-                $details['comment'] .= ' <small>'.$h['created'].'</small>';
-
-                $comments[] = $details;
-
-                $prevAssignedId   = $h['assigned_id'];
-                $prevAssignedName = $h['assigned_name'];
-            }
-            if (!is_null($h['milestone_id']))
-            {
-                $to   = '<a href="milestone.php?milestone='.$prevMilestoneId.'">'.$prevMilestoneName.'</a>';
-                $desc = sprintf(_("Added to %s milestone"), $to);
-                if (is_null($prevMilestoneId))
-                {
-                    $to   = '<a href="milestone.php?milestone='.$h['milestone_id'].'">'.$h['milestone_name'].'</a>';
-                    $desc = sprintf(_("Removed from %s milestone"), $to);
-                }
-
-                $details['comment']  = '<span class="glyphicon glyphicon-calendar"></span> ';
-                $details['comment'] .= $desc;
-                $details['comment'] .= ' <small>'.$h['created'].'</small>';
-
-                $comments[] = $details;
-
-                $prevMilestoneId   = $h['milestone_id'];
-                $prevMilestoneName = $h['milestone_name'];
-            }
-        }
-
-        // Sort the comments/details by created
-        usort($comments, function($a, $b) {
+        // Sort the comments and history by created
+        usort($commentsAndHistory, function($a, $b) {
             return strtotime($a['date']) - strtotime($b['date']);
         });
 
@@ -627,7 +529,7 @@ class TicketsController extends Controller
             'created'         => $ticket->created,
             'updated'         => $ticket->updated,
             'comment_message' => $commentMessage,
-            'comments'        => $comments,
+            'comments'        => $commentsAndHistory,
             'message'         => $message,
         );
 
@@ -1128,6 +1030,125 @@ class TicketsController extends Controller
         $comment = str_replace(array("\r\n", "\r", "\n"), "<br/>", $comment); 
 
         return $comment;
+    }
+
+    /**
+     * getTicketHistory 
+     * 
+     * Will get the ticket history information details for a given ticket id.
+     * 
+     * @param int $ticketId 
+     * 
+     * @return array
+     */
+    function getTicketHistory ($ticketId)
+    {
+        $historyDetails = array();
+
+        $history = ORM::forTable(DB_PREFIX.'ticket_history')
+            ->tableAlias('h')
+            ->select('h.*')
+            ->select('s.name', 'status_name')
+            ->select('s.color', 'status_color')
+            ->select('m.name', 'milestone_name')
+            ->select('m.due', 'milestone_due')
+            ->select('ua.name', 'assigned_name')
+            ->where('h.ticket_id', $ticketId)
+            ->left_outer_join(DB_PREFIX.'ticket_status', array('h.status_id', '=', 's.id'), 's')
+            ->left_outer_join(DB_PREFIX.'ticket_milestone', array('h.milestone_id', '=', 'm.id'), 'm')
+            ->left_outer_join(DB_PREFIX.'user', array('h.assigned_id', '=', 'ua.id'), 'ua')
+            ->order_by_desc('h.created')
+            ->findArray();
+
+        $prevSubject       = $ticket->subject;
+        $prevDescription   = $ticket->description;
+        $prevStatusName    = $ticket->status_name;
+        $prevStatusColor   = $ticket->status_color;
+        $prevAssignedId    = $ticket->assigned_id;
+        $prevAssignedName  = $ticket->assigned_name;
+        $prevMilestoneId   = $ticket->milestone_id;
+        $prevMilestoneName = $ticket->milestone_name;
+
+        for ($i = 0; $i < count($history); $i++)
+        {
+            $h = $history[$i];
+
+            $details = array(
+                'type' => 'details',
+                'date' => $h['created'],
+            );
+
+            if (!is_null($h['subject']))
+            {
+                $details['comment']  = '<span class="glyphicon glyphicon-book"></span> ';
+                $details['comment'] .= sprintf(_("Subject changed from '%s' to '%s'"), '<b>'.$h['subject'].'</b>', '<b>'.$prevSubject.'</b>');
+                $details['comment'] .= ' <small>'.$h['created'].'</small>';
+
+                $historyDetails[] = $details;
+
+                $prevSubject = $h['subject'];
+            }
+            if (!is_null($h['description']))
+            {
+                $details['comment']  = '<span class="glyphicon glyphicon-comment"></span> ';
+                $details['comment'] .= '<a href="#">';
+                $details['comment'] .= sprintf(_("Description updated'"), '<b>'.$h['subject'].'</b>', '<b>'.$prevSubject.'</b>');
+                $details['comment'] .= '</a>';
+                $details['comment'] .= ' <small>'.$h['created'].'</small>';
+
+                $historyDetails[] = $details;
+
+                $prevSubject = $h['subject'];
+            }
+            if (!is_null($h['status_id']))
+            {
+                $from = '<span class="label" style="background-color:#'.$h['status_color'].'">'.$h['status_name'].'</span>';
+                $to   = '<span class="label" style="background-color:#'.$prevStatusColor.'">'.$prevStatusName.'</span>';
+
+                $details['comment']  = '<span class="glyphicon glyphicon-tag"></span> ';
+                $details['comment'] .= sprintf(_("Status changed to %s"), $to);
+                $details['comment'] .= ' <small>'.$h['created'].'</small>';
+
+                $historyDetails[] = $details;
+
+                $prevStatusName  = $h['status_name'];
+                $prevStatusColor = $h['status_color'];
+            }
+            if (!is_null($h['assigned_id']))
+            {
+                $to = '<a href="user.php?id='.$prevAssignedId.'">'.$prevAssignedName.'</a>';
+
+                $details['comment']  = '<span class="glyphicon glyphicon-user"></span> ';
+                $details['comment'] .= sprintf(_("Assigned to %s"), $to);
+                $details['comment'] .= ' <small>'.$h['created'].'</small>';
+
+                $historyDetails[] = $details;
+
+                $prevAssignedId   = $h['assigned_id'];
+                $prevAssignedName = $h['assigned_name'];
+            }
+            if (!is_null($h['milestone_id']))
+            {
+                $to   = '<a href="milestone.php?milestone='.$prevMilestoneId.'">'.$prevMilestoneName.'</a>';
+                $desc = sprintf(_("Added to %s milestone"), $to);
+                if (is_null($prevMilestoneId))
+                {
+                    $to   = '<a href="milestone.php?milestone='.$h['milestone_id'].'">'.$h['milestone_name'].'</a>';
+                    $desc = sprintf(_("Removed from %s milestone"), $to);
+                }
+
+                $details['comment']  = '<span class="glyphicon glyphicon-calendar"></span> ';
+                $details['comment'] .= $desc;
+                $details['comment'] .= ' <small>'.$h['created'].'</small>';
+
+                $historyDetails[] = $details;
+
+                $prevMilestoneId   = $h['milestone_id'];
+                $prevMilestoneName = $h['milestone_name'];
+            }
+        }
+
+        return $historyDetails;
     }
 
     /**
