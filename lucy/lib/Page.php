@@ -17,6 +17,7 @@ class Page
     /**
      * Constructor
      * 
+     * @param string $currentPage
      * @return void
      */
     public function __construct ($currentPage)
@@ -40,7 +41,7 @@ class Page
      * 
      * @param array $templateOptions 
      * 
-     * @return boolean
+     * @return null|boolean
      */
     public function displayHeader ($templateOptions = array())
     {
@@ -211,7 +212,7 @@ class Page
      * 
      * @todo - this needs configurable
      *
-     * @return void
+     * @return string
      */
     private function getThemeDirectory ()
     {
