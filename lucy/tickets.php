@@ -22,7 +22,7 @@ class TicketsController extends Controller
      * 
      * @return void
      */
-    function run ()
+    public function run ()
     {
         $this->error = Error::getInstance();
         $this->user  = new User();
@@ -71,7 +71,7 @@ class TicketsController extends Controller
      * 
      * @return void
      */
-    function displayTickets ()
+    protected function displayTickets ()
     {
         $page = new Page('tickets');
 
@@ -80,24 +80,6 @@ class TicketsController extends Controller
         {
             $this->error->displayError();
             return;
-        }
-
-        // Get the list of tickets
-        try
-        {
-            $db = ORM::get_db();
-        }
-        catch (Exception $e)
-        {
-            $this->error->add(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not connect to database.'),
-                'object'  => $e,
-                'file'    => __FILE__,
-                'line'    => __LINE__,
-            ));
-
-            return false;
         }
 
         // Get the open/closed status ids
@@ -132,8 +114,10 @@ class TicketsController extends Controller
         // authors
         $authors = array();
 
+        $numberOfTickets = count($tickets);
+
         // Add zero class to tickets that have no comments
-        for ($i = 0; $i < count($tickets); $i++)
+        for ($i = 0; $i < $numberOfTickets; $i++)
         {
             $authors[ $tickets[$i]['created_id'] ] = array(
                 'id'    => $tickets[$i]['created_id'],
@@ -187,7 +171,7 @@ class TicketsController extends Controller
      * 
      * @return void
      */
-    function displayNewTicketForm ()
+    protected function displayNewTicketForm ()
     {
         $page = new Page('tickets');
 
@@ -231,6 +215,11 @@ class TicketsController extends Controller
         $milestones   = array();
         $templateName = 'new_not_authed';
 
+        $params = array(
+            'milestone_label' => _('Milestone'),
+            'form_errors'     => $formErrors,
+        );
+
         if ($this->user->isLoggedIn())
         {
             $templateName = 'new';
@@ -262,12 +251,8 @@ class TicketsController extends Controller
             }
         }
 
-        $params = array(
-            'milestone_label' => _('Milestone'),
-            'assignees'       => $assignees,
-            'milestones'      => $milestones,
-            'form_errors'     => $formErrors,
-        );
+        $params['assignees']  = $assignees;
+        $params['milestones'] = $milestones;
 
         $page->displayTemplate('tickets', $templateName, $params);
         if ($this->error->hasError())
@@ -298,7 +283,7 @@ class TicketsController extends Controller
      * 
      * @return void
      */
-    function displayNewTicketSubmit ()
+    protected function displayNewTicketSubmit ()
     {
         $validator = new FormValidator();
 
@@ -396,7 +381,7 @@ class TicketsController extends Controller
      * 
      * @return void
      */
-    function displayTicket ()
+    protected function displayTicket ()
     {
         $page = new Page('tickets');
 
@@ -493,7 +478,9 @@ class TicketsController extends Controller
             ->where('c.ticket_id', $_GET['ticket'])
             ->findArray();
 
-        for ($i = 0; $i < count($comments); $i++)
+        $numberOfComments = count($comments);
+
+        for ($i = 0; $i < $numberOfComments; $i++)
         {
             $c = $comments[$i];
 
@@ -565,7 +552,7 @@ class TicketsController extends Controller
      * 
      * @return void
      */
-    function displayAddCommentSubmit ()
+    protected function displayAddCommentSubmit ()
     {
         $validator = new FormValidator();
 
@@ -632,7 +619,7 @@ class TicketsController extends Controller
      * 
      * @return void
      */
-    function displayEditTicketForm ()
+    protected function displayEditTicketForm ()
     {
         $page = new Page('tickets');
 
@@ -766,7 +753,7 @@ class TicketsController extends Controller
      * 
      * @return void
      */
-    function displayEditTicketSubmit ()
+    protected function displayEditTicketSubmit ()
     {
         $page = new Page('tickets');
 
@@ -968,7 +955,7 @@ class TicketsController extends Controller
      * 
      * @return array
      */
-    function getUser ()
+    protected function getUser ()
     {
         $user = array();
 
@@ -1024,7 +1011,7 @@ class TicketsController extends Controller
      * 
      * @return string
      */
-    function parseComment ($comment)
+    protected function parseComment ($comment)
     {
         $comment = htmlentities($comment, ENT_COMPAT, 'UTF-8');
         $comment = str_replace(array("\r\n", "\r", "\n"), "<br/>", $comment); 
@@ -1041,7 +1028,7 @@ class TicketsController extends Controller
      * 
      * @return array
      */
-    function getTicketHistory ($ticketId)
+    protected function getTicketHistory ($ticketId)
     {
         $historyDetails = array();
 
@@ -1061,7 +1048,6 @@ class TicketsController extends Controller
             ->findArray();
 
         $prevSubject       = $ticket->subject;
-        $prevDescription   = $ticket->description;
         $prevStatusName    = $ticket->status_name;
         $prevStatusColor   = $ticket->status_color;
         $prevAssignedId    = $ticket->assigned_id;
@@ -1069,7 +1055,8 @@ class TicketsController extends Controller
         $prevMilestoneId   = $ticket->milestone_id;
         $prevMilestoneName = $ticket->milestone_name;
 
-        for ($i = 0; $i < count($history); $i++)
+        $numberOfHistory = count($history);
+        for ($i = 0; $i < $numberOfHistory; $i++)
         {
             $h = $history[$i];
 
@@ -1102,8 +1089,7 @@ class TicketsController extends Controller
             }
             if (!is_null($h['status_id']))
             {
-                $from = '<span class="label" style="background-color:#'.$h['status_color'].'">'.$h['status_name'].'</span>';
-                $to   = '<span class="label" style="background-color:#'.$prevStatusColor.'">'.$prevStatusName.'</span>';
+                $to = '<span class="label" style="background-color:#'.$prevStatusColor.'">'.$prevStatusName.'</span>';
 
                 $details['comment']  = '<span class="glyphicon glyphicon-tag"></span> ';
                 $details['comment'] .= sprintf(_("Status changed to %s"), $to);
@@ -1160,7 +1146,7 @@ class TicketsController extends Controller
      * 
      * @return array
      */
-    function getProfile ($name)
+    protected function getProfile ($name)
     {
         $profile = array(
             'NEW_TICKET' => array(

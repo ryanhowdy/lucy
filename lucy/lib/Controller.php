@@ -11,9 +11,14 @@
  */
 abstract class Controller
 {
-    abstract protected function run();
+    abstract public function run();
 
-    function __construct()
+    /**
+     * __construct 
+     * 
+     * @return void
+     */
+    public function __construct()
     {
         // Ensure that the site has been installed first
         if (!file_exists('config.php'))
@@ -29,6 +34,5 @@ abstract class Controller
         ORM::configure('username', DB_USERNAME);
         ORM::configure('password', DB_PASSWORD);
         ORM::configure('logging', true);
-
     }
 }
