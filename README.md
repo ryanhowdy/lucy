@@ -1,4 +1,5 @@
-lucy
+
+![Lucy](./lucy/templates/default/img/logo_black.png)
 ====
 
-The ultimate tool for managing and maintaining an open source project.
+An open source project's best friend.
