@@ -3,12 +3,6 @@
 session_start();
 
 require_once __DIR__.'/vendor/autoload.php';
-require_once __DIR__.'/config.php';
-require_once __DIR__.'/lib/Error.php';
-
-$control = new UserController();
-$control->run();
-exit();
 
 /**
  * UserController 
@@ -18,7 +12,7 @@ exit();
  * @author    Ryan Haudenschilt <r.haudenschilt@gmail.com> 
  * @license   http://www.gnu.org/licenses/gpl-2.0.html
  */
-class UserController
+class UserController extends Controller
 {
     private $error;
     private $user;
@@ -106,3 +100,7 @@ class UserController
         return;
     }
 }
+
+$control = new UserController();
+$control->run();
+exit();

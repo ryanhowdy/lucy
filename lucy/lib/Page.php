@@ -23,26 +23,15 @@ class Page
     {
         $this->error = Error::getInstance();
 
-        // Ensure that the site has been installed first
-        if (!file_exists('config.php'))
-        {
-            header("Location: install.php");
-            return;
-        }
-
-        ORM::configure(DB_CONNECTION);
-        ORM::configure('username', DB_USERNAME);
-        ORM::configure('password', DB_PASSWORD);
-        ORM::configure('logging', true);
-
         $this->currentPage = $currentPage;
 
         $this->pageLkup = array(
-            'dashboard' => _('Dashboard'),
-            'user'      => _('User'),
-            'login'     => _('Login'),
-            'help'      => _('Help'),
-            'tickets'   => _('Tickets'),
+            'dashboard'   => _('Dashboard'),
+            'user'        => _('User'),
+            'login'       => _('Login'),
+            'help'        => _('Help'),
+            'tickets'     => _('Tickets'),
+            'discussions' => _('Discussions'),
         );
     }
 

@@ -3,12 +3,6 @@
 session_start();
 
 require_once __DIR__.'/vendor/autoload.php';
-require_once __DIR__.'/config.php';
-require_once __DIR__.'/lib/Error.php';
-
-$control = new DashboardController();
-$control->run();
-exit();
 
 /**
  * DashboardController 
@@ -18,7 +12,7 @@ exit();
  * @author    Ryan Haudenschilt <r.haudenschilt@gmail.com> 
  * @license   http://www.gnu.org/licenses/gpl-2.0.html
  */
-class DashboardController
+class DashboardController extends Controller
 {
     private $error;
     private $user;
@@ -71,3 +65,7 @@ class DashboardController
         return;
     }
 }
+
+$control = new DashboardController();
+$control->run();
+exit();

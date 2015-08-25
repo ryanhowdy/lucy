@@ -3,12 +3,6 @@
 session_start();
 
 require_once __DIR__.'/vendor/autoload.php';
-require_once __DIR__.'/config.php';
-require_once __DIR__.'/lib/Error.php';
-
-$control = new HelpController();
-$control->run();
-exit();
 
 /**
  * HelpController 
@@ -18,7 +12,7 @@ exit();
  * @author    Ryan Haudenschilt <r.haudenschilt@gmail.com> 
  * @license   http://www.gnu.org/licenses/gpl-2.0.html
  */
-class HelpController
+class HelpController extends Controller
 {
     private $error;
     private $user;
@@ -71,3 +65,7 @@ class HelpController
         return;
     }
 }
+
+$control = new HelpController();
+$control->run();
+exit();

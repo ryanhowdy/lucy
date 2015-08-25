@@ -3,12 +3,6 @@
 session_start();
 
 require_once __DIR__.'/vendor/autoload.php';
-require_once __DIR__.'/config.php';
-require_once __DIR__.'/lib/Error.php';
-
-$control = new TicketsController();
-$control->run();
-exit();
 
 /**
  * TicketsController 
@@ -18,7 +12,7 @@ exit();
  * @author    Ryan Haudenschilt <r.haudenschilt@gmail.com> 
  * @license   http://www.gnu.org/licenses/gpl-2.0.html
  */
-class TicketsController
+class TicketsController extends Controller
 {
     private $error;
     private $user;
@@ -1195,3 +1189,7 @@ class TicketsController
         return $profile[$name];
     }
 }
+
+$control = new TicketsController();
+$control->run();
+exit();
