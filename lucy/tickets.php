@@ -31,29 +31,29 @@ class TicketsController extends Controller
         {
             if (isset($_POST['submit']))
             {
-                $this->displayNewTicketSubmit();
+                $this->displayTicketCreateSubmit();
                 return;
             }
 
-            $this->displayNewTicketForm();
+            $this->displayTicketCreate();
             return;
         }
         elseif (isset($_GET['edit']))
         {
             if (isset($_POST['submit']))
             {
-                $this->displayEditTicketSubmit();
+                $this->displayTicketEditSubmit();
                 return;
             }
 
-            $this->displayEditTicketForm();
+            $this->displayTicketEdit();
             return;
         }
         elseif (isset($_GET['ticket']))
         {
             if (isset($_POST['add-comment']))
             {
-                $this->displayAddCommentSubmit();
+                $this->displayCommentCreateSubmit();
                 return;
             }
 
@@ -165,13 +165,13 @@ class TicketsController extends Controller
     }
 
     /**
-     * displayNewTicketForm
+     * displayTicketCreate
      * 
      * Displays the form for creating a new ticket.
      * 
      * @return null|false
      */
-    protected function displayNewTicketForm ()
+    protected function displayTicketCreate ()
     {
         $page = new Page('tickets');
 
@@ -277,17 +277,17 @@ class TicketsController extends Controller
     }
 
     /**
-     * displayNewTicketSubmit
+     * displayTicketCreateSubmit
      * 
      * Handles the submitting of the new ticket form.
      * 
      * @return null|false
      */
-    protected function displayNewTicketSubmit ()
+    protected function displayTicketCreateSubmit ()
     {
         $validator = new FormValidator();
 
-        $errors = $validator->validate($_POST, $this->getProfile('NEW_TICKET'));
+        $errors = $validator->validate($_POST, $this->getProfile('CREATE'));
         if ($errors !== true)
         {
             header("Location: tickets.php?new");
@@ -548,11 +548,11 @@ class TicketsController extends Controller
     }
 
     /**
-     * displayAddCommentSubmit 
+     * displayCommentCreateSubmit 
      * 
      * @return null|false
      */
-    protected function displayAddCommentSubmit ()
+    protected function displayCommentCreateSubmit ()
     {
         $validator = new FormValidator();
 
@@ -613,13 +613,13 @@ class TicketsController extends Controller
     }
 
     /**
-     * displayEditTicketForm 
+     * displayTicketEdit 
      * 
      * Prints the from for editting an existing ticket.
      * 
      * @return null|false
      */
-    protected function displayEditTicketForm ()
+    protected function displayTicketEdit ()
     {
         $page = new Page('tickets');
 
@@ -749,17 +749,17 @@ class TicketsController extends Controller
     }
 
     /**
-     * displayEditTicketSubmit 
+     * displayTicketEditSubmit 
      * 
      * @return null|false
      */
-    protected function displayEditTicketSubmit ()
+    protected function displayTicketEditSubmit ()
     {
         $page = new Page('tickets');
 
         $validator = new FormValidator();
 
-        $errors = $validator->validate($_POST, $this->getProfile('NEW_TICKET'));
+        $errors = $validator->validate($_POST, $this->getProfile('CREATE'));
         if ($errors !== true)
         {
             header("Location: tickets.php?edit=".$_POST['edit']);
@@ -1149,7 +1149,7 @@ class TicketsController extends Controller
     protected function getProfile ($name)
     {
         $profile = array(
-            'NEW_TICKET' => array(
+            'CREATE' => array(
                 'constraints' => array(
                     'subject' => array(
                         'required' => 1,
