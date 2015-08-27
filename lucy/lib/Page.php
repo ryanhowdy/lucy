@@ -119,6 +119,11 @@ class Page
     public function displayFooter ()
     {
         $this->displayTemplate('global', 'footer', array('year' => gmdate('Y')));
+        if ($this->error->hasError())
+        {
+            $this->error->displayError();
+            return;
+        }
 
         return true;
     }

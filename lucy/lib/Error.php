@@ -57,17 +57,24 @@ class Error
      * displayError 
      * 
      * Prints out the error(s).
+     * Also allows you to add a new error, then print errors.
      * 
-     * @return void
+     * @param null|array $params
+     * 
+     * @return null
      */
-    public function displayError ()
+    public function displayError ($params = null)
     {
+        if (is_array($params))
+        {
+            $this->add($params);
+        }
+
         if (!$this->hasError())
         {
             return;
         }
 
-        echo '<style>.alert > pre { height: 300px; overflow: scroll; }</style>';
         echo '<div class="alert alert-danger" role="alert">';
 
         foreach ($this->errorList as $error)

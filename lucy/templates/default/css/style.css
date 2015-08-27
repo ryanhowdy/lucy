@@ -1,6 +1,14 @@
 body {
   background-color: #333333;
 }
+body > .alert-danger {
+  margin-left: 15px;
+  margin-right: 15px;
+}
+body > .alert-danger > pre {
+  height: 300px;
+  overflow: scroll;
+}
 .container-fluid {
   margin-left: 15px;
   margin-right: 15px;

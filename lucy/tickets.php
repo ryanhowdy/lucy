@@ -76,11 +76,6 @@ class TicketsController extends Controller
         $page = new Page('tickets');
 
         $page->displayHeader();
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
 
         // Get the open/closed status ids
         $tks = \Ticket\Status::build();
@@ -92,24 +87,40 @@ class TicketsController extends Controller
         }
 
         // Get tickets
-        $tickets = ORM::forTable(DB_PREFIX.'ticket')
-            ->tableAlias('t')
-            ->select('t.*')
-            ->select('u.name', 'created_by')
-            ->select('s.name', 'status_name')
-            ->select('s.color', 'status_color')
-            ->select('m.name', 'milestone_name')
-            ->select('ua.name', 'assigned_name')
-            ->select_expr('COUNT(tc.id)', 'comments_count')
-            ->join(DB_PREFIX.'user', array('t.created_id', '=', 'u.id'), 'u')
-            ->left_outer_join(DB_PREFIX.'user', array('t.assigned_id', '=', 'ua.id'), 'ua')
-            ->left_outer_join(DB_PREFIX.'ticket_status', array('t.status_id', '=', 's.id'), 's')
-            ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
-            ->left_outer_join(DB_PREFIX.'ticket_comment', array('t.id', '=', 'tc.ticket_id'), 'tc')
-            ->where_in('status_id', $statusIds)
-            ->order_by_asc('id')
-            ->group_by('t.id')
-            ->findArray();
+        try
+        {
+            $tickets = ORM::forTable(DB_PREFIX.'ticket')
+                ->tableAlias('t')
+                ->select('t.*')
+                ->select('u.name', 'created_by')
+                ->select('s.name', 'status_name')
+                ->select('s.color', 'status_color')
+                ->select('m.name', 'milestone_name')
+                ->select('ua.name', 'assigned_name')
+                ->select_expr('COUNT(tc.id)', 'comments_count')
+                ->join(DB_PREFIX.'user', array('t.created_id', '=', 'u.id'), 'u')
+                ->left_outer_join(DB_PREFIX.'user', array('t.assigned_id', '=', 'ua.id'), 'ua')
+                ->left_outer_join(DB_PREFIX.'ticket_status', array('t.status_id', '=', 's.id'), 's')
+                ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
+                ->left_outer_join(DB_PREFIX.'ticket_comment', array('t.id', '=', 'tc.ticket_id'), 'tc')
+                ->where_in('status_id', $statusIds)
+                ->order_by_asc('id')
+                ->group_by('t.id')
+                ->findArray();
+        }
+        catch (Exception $e)
+        {
+            $this->error->displayError(array(
+                'title'   => _('Database Error.'),
+                'message' => _('Could not get Tickets.'),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'sql'     => ORM::getLastQuery(),
+            ));
+            $page->displayFooter();
+            return;
+        }
 
         // authors
         $authors = array();
@@ -155,11 +166,6 @@ class TicketsController extends Controller
         }
 
         $page->displayFooter();
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
 
         return;
     }
@@ -169,35 +175,13 @@ class TicketsController extends Controller
      * 
      * Displays the form for creating a new ticket.
      * 
-     * @return null|false
+     * @return null
      */
     protected function displayTicketCreate ()
     {
         $page = new Page('tickets');
 
         $page->displayHeader();
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
-
-        try
-        {
-            $db = ORM::get_db();
-        }
-        catch (Exception $e)
-        {
-            $this->error->add(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not connect to database.'),
-                'object'  => $e,
-                'file'    => __FILE__,
-                'line'    => __LINE__,
-            ));
-
-            return false;
-        }
 
         // Get any previous form errors
         $formErrors = array();
@@ -262,11 +246,6 @@ class TicketsController extends Controller
         }
 
         $page->displayFooter();
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
 
         if (isset($_SESSION['form_errors']))
         {
@@ -281,7 +260,7 @@ class TicketsController extends Controller
      * 
      * Handles the submitting of the new ticket form.
      * 
-     * @return null|false
+     * @return null
      */
     protected function displayTicketCreateSubmit ()
     {
@@ -306,23 +285,6 @@ class TicketsController extends Controller
         if (isset($_SESSION['form_errors']))
         {
             unset($_SESSION['form_errors']);
-        }
-
-        try
-        {
-            $db = ORM::get_db();
-        }
-        catch (Exception $e)
-        {
-            $this->error->add(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not connect to database.'),
-                'object'  => $e,
-                'file'    => __FILE__,
-                'line'    => __LINE__,
-            ));
-
-            return false;
         }
 
         // Get the user info, either from email or logged in user
@@ -379,7 +341,7 @@ class TicketsController extends Controller
      * 
      * Displays a single ticket.
      * 
-     * @return false|null
+     * @return null
      */
     protected function displayTicket ()
     {
@@ -410,23 +372,6 @@ class TicketsController extends Controller
             $message['messages'] = array($_SESSION['success']);
         }
 
-        try
-        {
-            $db = ORM::get_db();
-        }
-        catch (Exception $e)
-        {
-            $this->error->add(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not connect to database.'),
-                'object'  => $e,
-                'file'    => __FILE__,
-                'line'    => __LINE__,
-            ));
-
-            return false;
-        }
-
         // Get ticket info
         try
         {
@@ -447,15 +392,17 @@ class TicketsController extends Controller
         }
         catch (Exception $e)
         {
-            $this->error->add(array(
+            $page->displayHeader();
+            $this->error->displayError(array(
                 'title'   => _('Database Error.'),
                 'message' => _('Could not get Ticket.'),
                 'object'  => $e,
                 'file'    => __FILE__,
                 'line'    => __LINE__,
+                'sql'     => ORM::getLastQuery(),
             ));
-
-            return false;
+            $page->displayFooter();
+            return;
         }
 
         if ($ticket === false)
@@ -470,13 +417,30 @@ class TicketsController extends Controller
         $description   = $this->parseComment($ticket->description);
 
         // Get comments
-        $comments = ORM::forTable(DB_PREFIX.'ticket_comment')
-            ->tableAlias('c')
-            ->select('c.*')
-            ->select('u.name', 'updated_by')
-            ->join(DB_PREFIX.'user', array('c.updated_id', '=', 'u.id'), 'u')
-            ->where('c.ticket_id', $_GET['ticket'])
-            ->findArray();
+        try
+        {
+            $comments = ORM::forTable(DB_PREFIX.'ticket_comment')
+                ->tableAlias('c')
+                ->select('c.*')
+                ->select('u.name', 'updated_by')
+                ->join(DB_PREFIX.'user', array('c.updated_id', '=', 'u.id'), 'u')
+                ->where('c.ticket_id', $_GET['ticket'])
+                ->findArray();
+        }
+        catch (Exception $e)
+        {
+            $page->displayHeader();
+            $this->error->displayError(array(
+                'title'   => _('Database Error.'),
+                'message' => _('Could not get Ticket Comments.'),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'sql'     => ORM::getLastQuery(),
+            ));
+            $page->displayFooter();
+            return;
+        }
 
         $numberOfComments = count($comments);
 
@@ -550,7 +514,7 @@ class TicketsController extends Controller
     /**
      * displayCommentCreateSubmit 
      * 
-     * @return null|false
+     * @return null
      */
     protected function displayCommentCreateSubmit ()
     {
@@ -566,23 +530,6 @@ class TicketsController extends Controller
         if (isset($_SESSION['form_errors']))
         {
             unset($_SESSION['form_errors']);
-        }
-
-        try
-        {
-            $db = ORM::get_db();
-        }
-        catch (Exception $e)
-        {
-            $this->error->add(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not connect to database.'),
-                'object'  => $e,
-                'file'    => __FILE__,
-                'line'    => __LINE__,
-            ));
-
-            return false;
         }
 
         // Get the user info, either from email or logged in user
@@ -617,40 +564,18 @@ class TicketsController extends Controller
      * 
      * Prints the from for editting an existing ticket.
      * 
-     * @return null|false
+     * @return null
      */
     protected function displayTicketEdit ()
     {
         $page = new Page('tickets');
 
         $page->displayHeader();
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
 
         if (!$this->user->isLoggedIn())
         {
             $page->displayMustBeLoggedIn();
             return;
-        }
-
-        try
-        {
-            $db = ORM::get_db();
-        }
-        catch (Exception $e)
-        {
-            $this->error->add(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not connect to database.'),
-                'object'  => $e,
-                'file'    => __FILE__,
-                'line'    => __LINE__,
-            ));
-
-            return false;
         }
 
         // Get any previous form errors
@@ -666,16 +591,32 @@ class TicketsController extends Controller
         }
 
         // Get ticket info
-        $ticket = ORM::forTable(DB_PREFIX.'ticket')
-            ->tableAlias('t')
-            ->select('t.*')
-            ->select('c.name', 'created_by')
-            ->select('s.name', 'status_name')
-            ->select('m.name', 'milestone_name')
-            ->join(DB_PREFIX.'user', array('t.created_id', '=', 'c.id'), 'c')
-            ->left_outer_join(DB_PREFIX.'ticket_status', array('t.status_id', '=', 's.id'), 's')
-            ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
-            ->findOne($_GET['edit']);
+        try
+        {
+            $ticket = ORM::forTable(DB_PREFIX.'ticket')
+                ->tableAlias('t')
+                ->select('t.*')
+                ->select('c.name', 'created_by')
+                ->select('s.name', 'status_name')
+                ->select('m.name', 'milestone_name')
+                ->join(DB_PREFIX.'user', array('t.created_id', '=', 'c.id'), 'c')
+                ->left_outer_join(DB_PREFIX.'ticket_status', array('t.status_id', '=', 's.id'), 's')
+                ->left_outer_join(DB_PREFIX.'ticket_milestone', array('t.milestone_id', '=', 'm.id'), 'm')
+                ->findOne($_GET['edit']);
+        }
+        catch (Exception $e)
+        {
+            $this->error->displayError(array(
+                'title'   => _('Database Error.'),
+                'message' => _('Could not get Ticket.'),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'sql'     => ORM::getLastQuery(),
+            ));
+            $page->displayFooter();
+            return;
+        }
 
         // Get list of all users for assignee
         $users = ORM::forTable(DB_PREFIX.'user')->findMany();
@@ -734,11 +675,6 @@ class TicketsController extends Controller
         }
 
         $page->displayFooter();
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
 
         if (isset($_SESSION['form_errors']))
         {
@@ -751,7 +687,7 @@ class TicketsController extends Controller
     /**
      * displayTicketEditSubmit 
      * 
-     * @return null|false
+     * @return null
      */
     protected function displayTicketEditSubmit ()
     {
@@ -777,32 +713,33 @@ class TicketsController extends Controller
             unset($_SESSION['form_errors']);
         }
 
+        // Get the original ticket info
         try
         {
-            $db = ORM::get_db();
+            $ticket = ORM::forTable(DB_PREFIX.'ticket')->findOne($_GET['edit']);
         }
         catch (Exception $e)
         {
-            $this->error->add(array(
+            $page->displayHeader();
+            $this->error->displayError(array(
                 'title'   => _('Database Error.'),
-                'message' => _('Could not connect to database.'),
+                'message' => _('Could not get Ticket.'),
                 'object'  => $e,
                 'file'    => __FILE__,
                 'line'    => __LINE__,
+                'sql'     => ORM::getLastQuery(),
             ));
-
-            return false;
+            $page->displayFooter();
+            return;
         }
 
+        $originalTicket = $ticket->asArray();
+
+        $ticketChanged = false;
+
+        // Save the ticket history
         try
         {
-            // Get the original ticket info
-            $ticket = ORM::forTable(DB_PREFIX.'ticket')->findOne($_GET['edit']);
-
-            $originalTicket = $ticket->asArray();
-
-            // Save the ticket history
-            $ticketChanged = false;
             $history = ORM::forTable(DB_PREFIX.'ticket_history')->create();
 
             // only save the things that changed
@@ -867,8 +804,25 @@ class TicketsController extends Controller
                 $history->set_expr('created', 'UTC_TIMESTAMP()');
                 $history->save();
             }
+        }
+        catch (Exception $e)
+        {
+            $page->displayHeader();
+            $this->error->displayError(array(
+                'title'   => _('Database Error.'),
+                'message' => _('Could not update Ticket History.'),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'sql'     => ORM::getLastQuery(),
+            ));
+            $page->displayFooter();
+            return;
+        }
 
-            // Save the new ticket updates
+        // Save the new ticket updates
+        try
+        {
             $ticket->subject     = $_POST['subject'];
             $ticket->description = $_POST['description'];
             $ticket->status_id   = $_POST['status_id'];
@@ -902,7 +856,8 @@ class TicketsController extends Controller
         }
         catch (Exception $e)
         {
-            $this->error->add(array(
+            $page->displayHeader();
+            $this->error->displayError(array(
                 'title'   => _('Database Error.'),
                 'message' => _('Could not update ticket.'),
                 'object'  => $e,
@@ -910,9 +865,6 @@ class TicketsController extends Controller
                 'line'    => __LINE__,
                 'sql'     => ORM::getLastQuery(),
             ));
-
-            $page->displayHeader();
-            $this->error->displayError();
             $page->displayFooter();
             return;
         }
