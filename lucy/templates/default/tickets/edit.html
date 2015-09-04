@@ -40,8 +40,8 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="milestone">{{ milestone_label }}</label>
-                        <select class="form-control" id="milestone" name="milestone">
+                        <label for="milestone_id">{{ milestone_label }}</label>
+                        <select class="form-control" id="milestone_id" name="milestone_id">
                         {% for milestone in milestones %}
                             <option {% if milestone.id == values.milestone %}selected="selected"{% endif %} value="{{ milestone.id }}">{{ milestone.label }}</option>
                         {% endfor %}
@@ -49,7 +49,7 @@
                     </div>
                 </div>
             </div><!--/.row-->
-            <input type="hidden" name="user_id" value="{{ user_id }}"/>
+            <input type="hidden" name="updated_id" value="{{ updated_id }}"/>
             <input type="hidden" name="ticket_id" value="{{ values.ticket_id }}"/>
             <input type="hidden" name="submit" value="1"/>
             <button type="submit" class="btn btn-primary">Submit</button>

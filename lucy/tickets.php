@@ -60,6 +60,18 @@ class TicketsController extends Controller
             $this->displayTicket();
             return;
         }
+        elseif (isset($_POST['ajax']))
+        {
+            $ajax = $_POST['ajax'];
+
+            if ($ajax === 'edit')
+            {
+                return $this->displayTicketEditAjax();
+            }
+
+            header('HTTP/1.1 500 Internal Server Error');
+            return;
+        }
 
         $this->displayTickets();
     }
@@ -111,8 +123,8 @@ class TicketsController extends Controller
         catch (Exception $e)
         {
             $this->error->displayError(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not get Tickets.'),
+                'title'   => _('Could not get Tickets.'),
+                'message' => $e->getMessage(),
                 'object'  => $e,
                 'file'    => __FILE__,
                 'line'    => __LINE__,
@@ -208,7 +220,7 @@ class TicketsController extends Controller
         {
             $templateName = 'new';
 
-            $params['user_id'] = $this->user->id;
+            $params['updated_id'] = $this->user->id;
 
             // Get list of all users for assignee
             $users = ORM::forTable(DB_PREFIX.'user')->findMany();
@@ -394,8 +406,8 @@ class TicketsController extends Controller
         {
             $page->displayHeader();
             $this->error->displayError(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not get Ticket.'),
+                'title'   => _('Could not get Ticket.'),
+                'message' => $e->getMessage(),
                 'object'  => $e,
                 'file'    => __FILE__,
                 'line'    => __LINE__,
@@ -431,8 +443,8 @@ class TicketsController extends Controller
         {
             $page->displayHeader();
             $this->error->displayError(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not get Ticket Comments.'),
+                'title'   => _('Could not get Ticket Comments.'), 
+                'message' => $e->getMessage(),
                 'object'  => $e,
                 'file'    => __FILE__,
                 'line'    => __LINE__,
@@ -486,8 +498,15 @@ class TicketsController extends Controller
 
         if ($this->user->isLoggedIn())
         {
-            $params['logged_in'] = 1;
-            $params['user_id']   = $this->user->id;
+            $params['logged_in']  = 1;
+            $params['updated_id'] = $this->user->id;
+
+            // Get quick edit info
+            $lists = $this->getAssigneeMilestoneStatusLists($ticket, false);
+
+            $params['assignees']  = $lists['assignees'];
+            $params['milestones'] = $lists['milestones'];
+            $params['statuses']   = $lists['statuses'];
         }
 
         $page->displayHeader(array(
@@ -607,8 +626,8 @@ class TicketsController extends Controller
         catch (Exception $e)
         {
             $this->error->displayError(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not get Ticket.'),
+                'title'   => _('Could not get Ticket.'),
+                'message' => $e->getMessage(),
                 'object'  => $e,
                 'file'    => __FILE__,
                 'line'    => __LINE__,
@@ -618,44 +637,15 @@ class TicketsController extends Controller
             return;
         }
 
-        // Get list of all users for assignee
-        $users = ORM::forTable(DB_PREFIX.'user')->findMany();
-
-        $assignees = array(array('id' => 'NONE', 'label' => ''));
-        foreach ($users as $user)
-        {
-            $assignees[] = array(
-                'id'    => $user['id'],
-                'label' => $user['name'],
-            );
-        }
-
-        // Get list of all open milestones
-        $milestoneRecords = ORM::forTable(DB_PREFIX.'ticket_milestone')
-            ->where('complete', '0000-00-00')
-            ->findMany();
-
-        $milestones = array(array('id' => 'NONE', 'label' => ''));
-        foreach ($milestoneRecords as $milestone)
-        {
-            $milestones[] = array(
-                'id'    => $milestone['id'],
-                'label' => $milestone['name'].' ('.$milestone['due'].')',
-            );
-        }
-
-        // get the configured ticket status class
-        $tks = \Ticket\Status::build();
-
-        // Get statuses
-        $statuses = $tks->getNextStatuses($ticket->status_id);
+        // Get assignee milestone and status lists
+        $lists = $this->getAssigneeMilestoneStatusLists($ticket);
 
         $params = array(
-            'user_id'         => $this->user->id,
+            'updated_id'      => $this->user->id,
             'milestone_label' => _('Milestone'),
-            'assignees'       => $assignees,
-            'milestones'      => $milestones,
-            'statuses'        => $statuses,
+            'assignees'       => $lists['assignees'],
+            'milestones'      => $lists['milestones'],
+            'statuses'        => $lists['statuses'],
             'form_errors'     => $formErrors,
             'values'          => array(
                 'ticket_id'   => $ticket->id,
@@ -713,171 +703,8 @@ class TicketsController extends Controller
             unset($_SESSION['form_errors']);
         }
 
-        // Get the original ticket info
-        try
-        {
-            $ticket = ORM::forTable(DB_PREFIX.'ticket')->findOne($_GET['edit']);
-        }
-        catch (Exception $e)
-        {
-            $page->displayHeader();
-            $this->error->displayError(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not get Ticket.'),
-                'object'  => $e,
-                'file'    => __FILE__,
-                'line'    => __LINE__,
-                'sql'     => ORM::getLastQuery(),
-            ));
-            $page->displayFooter();
-            return;
-        }
-
-        $originalTicket = $ticket->asArray();
-
-        $ticketChanged = false;
-
-        // Save the ticket history
-        try
-        {
-            $history = ORM::forTable(DB_PREFIX.'ticket_history')->create();
-
-            // only save the things that changed
-            if ($originalTicket['subject'] !== $_POST['subject'])
-            {
-                $history->subject = $originalTicket['subject'];
-                $ticketChanged    = true;
-            }
-            if ($originalTicket['description'] !== $_POST['description'])
-            {
-                $history->description = $originalTicket['description'];
-                $ticketChanged        = true;
-            }
-            if ($originalTicket['status_id'] !== $_POST['status_id'])
-            {
-                $history->status_id = $originalTicket['status_id'];
-                $ticketChanged      = true;
-            }
-            if ($originalTicket['assigned_id'] !== $_POST['assigned_id'])
-            {
-                // No existing assignee
-                if (empty($originalTicket['assigned_id']))
-                {
-                    if ($_POST['assigned_id'] != 'NONE')
-                    {
-                        $history->assigned_id = 0;
-                        $ticketChanged        = true;
-                    }
-                }
-                // Existing assignee
-                else
-                {
-                    // We are either removing the current assignee or changing it
-                    $history->assigned_id = $originalTicket['assigned_id'];
-                    $ticketChanged        = true;
-                }
-            }
-            if ($originalTicket['milestone_id'] !== $_POST['milestone'])
-            {
-                // No existing milestone
-                if (empty($originalTicket['milestone_id']))
-                {
-                    if ($_POST['milestone'] != 'NONE')
-                    {
-                        $history->milestone_id = 0;
-                        $ticketChanged         = true;
-                    }
-                }
-                else
-                {
-                    $history->milestone_id = $originalTicket['milestone_id'];
-                    $ticketChanged         = true;
-                }
-
-            }
-
-            if ($ticketChanged) {
-                $history->set(array(
-                    'ticket_id'    => $originalTicket['id'],
-                    'created_id'   => $originalTicket['updated_id'],  // NOTE: the logged in user didn't create the history, the previous updated_id did
-                ));
-                $history->set_expr('created', 'UTC_TIMESTAMP()');
-                $history->save();
-            }
-        }
-        catch (Exception $e)
-        {
-            $page->displayHeader();
-            $this->error->displayError(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not update Ticket History.'),
-                'object'  => $e,
-                'file'    => __FILE__,
-                'line'    => __LINE__,
-                'sql'     => ORM::getLastQuery(),
-            ));
-            $page->displayFooter();
-            return;
-        }
-
-        // Save the new ticket updates
-        try
-        {
-            $ticket->subject     = $_POST['subject'];
-            $ticket->description = $_POST['description'];
-            $ticket->status_id   = $_POST['status_id'];
-            $ticket->updated_id  = $_POST['user_id'];
-
-            if (isset($_POST['assigned_id']) && !empty($_POST['assigned_id']))
-            {
-                if ($_POST['assigned_id'] === 'NONE')
-                {
-                    $ticket->set_expr('assigned_id', 'NULL');
-                }
-                else
-                {
-                    $ticket->assigned_id = $_POST['assigned_id'];
-                }
-            }
-            if (isset($_POST['milestone']) && !empty($_POST['milestone']))
-            {
-                if ($_POST['milestone'] === 'NONE')
-                {
-                    $ticket->set_expr('milestone_id', 'NULL');
-                }
-                else
-                {
-                    $ticket->milestone_id = $_POST['milestone'];
-                }
-            }
-
-            $ticket->set_expr('updated', 'UTC_TIMESTAMP()');
-            $ticket->save();
-        }
-        catch (Exception $e)
-        {
-            $page->displayHeader();
-            $this->error->displayError(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not update ticket.'),
-                'object'  => $e,
-                'file'    => __FILE__,
-                'line'    => __LINE__,
-                'sql'     => ORM::getLastQuery(),
-            ));
-            $page->displayFooter();
-            return;
-        }
-
-        $userActivity = new UserActivity();
-        $userActivity->handleTicketUpdate($originalTicket, $_POST);
-
-        if ($userActivity->currentUserGotPoints)
-        {
-            $_SESSION['success'] = $userActivity->lastPointsReason;
-        }
-
-        if ($this->error->hasError())
+        // Update the ticket and history
+        if (!$this->updateTicketAndHistory($_GET['edit'], $_POST))
         {
             $page->displayHeader();
             $this->error->displayError();
@@ -885,12 +712,149 @@ class TicketsController extends Controller
             return;
         }
 
-        if (isset($_SESSION['form_errors']))
+        header("Location: tickets.php?ticket=".$_GET['edit']);
+        return;
+    }
+
+    /**
+     * displayTicketEditAjax 
+     * 
+     * @return null
+     */
+    protected function displayTicketEditAjax ()
+    {
+        if (!$this->user->isLoggedIn())
         {
-            unset($_SESSION['form_errors']);
+            header('Content-type: application/json');
+            echo json_encode(array(
+                'status'  => 'error',
+                'message' => _('Not authorized!'),
+            ));
+            return;
         }
 
-        header("Location: tickets.php?ticket=".$_GET['edit']);
+        $validator = new FormValidator();
+
+        $_POST['updated_id'] = $this->user->id;
+
+        $errors = $validator->validate($_POST, $this->getProfile('EDIT_AJAX'));
+        if ($errors !== true)
+        {
+            header('Content-type: application/json');
+            echo json_encode(array(
+                'status' => 'fail',
+                'data'   => array(
+                    'title'  => _('There was a problem with your request.'),
+                    'errors' => $errors,
+                ),
+            ));
+            return;
+        }
+
+        // Update the ticket and history
+        if (!$this->updateTicketAndHistory($_POST['id'], $_POST))
+        {
+            header('Content-type: application/json');
+            $this->error->displayJsonError();
+            return;
+        }
+
+        if (isset($_SESSION['success']))
+        {
+            unset($_SESSION['success']);
+        }
+
+        // Get additional info for ids
+        if (isset($_SESSION['ticket_edit_ajax_data']['changed']['status_id']))
+        {
+            try
+            {
+                $status = ORM::forTable(DB_PREFIX.'ticket_status')->findOne($_SESSION['ticket_edit_ajax_data']['changed']['status_id']);
+            }
+            catch (Exception $e)
+            {
+                $this->error->displayJsonError(array(
+                    'title'   => _('Could not get Status.'),
+                    'message' => $e->getMessage(),
+                    'object'  => $e,
+                    'file'    => __FILE__,
+                    'line'    => __LINE__,
+                    'sql'     => ORM::getLastQuery(),
+                ));
+                return;
+            }
+
+            $_SESSION['ticket_edit_ajax_data']['changed']['status_name']  = $status->name;
+            $_SESSION['ticket_edit_ajax_data']['changed']['status_color'] = $status->color;
+        }
+        if (isset($_SESSION['ticket_edit_ajax_data']['changed']['assigned_id']))
+        {
+            if ($_SESSION['ticket_edit_ajax_data']['changed']['assigned_id'] === 'NONE')
+            {
+                $_SESSION['ticket_edit_ajax_data']['changed']['assigned_name'] = _('no one');
+            }
+            else
+            {
+                try
+                {
+                    $assignee = ORM::forTable(DB_PREFIX.'user')->findOne($_SESSION['ticket_edit_ajax_data']['changed']['assigned_id']);
+                }
+                catch (Exception $e)
+                {
+                    $this->error->displayJsonError(array(
+                        'title'   => _('Could not get Assignee.'),
+                        'message' => $e->getMessage(),
+                        'object'  => $e,
+                        'file'    => __FILE__,
+                        'line'    => __LINE__,
+                        'sql'     => ORM::getLastQuery(),
+                    ));
+                    return;
+                }
+
+                $_SESSION['ticket_edit_ajax_data']['changed']['assigned_name']  = $assignee->name;
+            }
+        }
+        if (isset($_SESSION['ticket_edit_ajax_data']['changed']['milestone_id']))
+        {
+            if ($_SESSION['ticket_edit_ajax_data']['changed']['milestone_id'] === 'NONE')
+            {
+                $_SESSION['ticket_edit_ajax_data']['changed']['milestone_name'] = _('none');
+            }
+            else
+            {
+                try
+                {
+                    $milestone = ORM::forTable(DB_PREFIX.'ticket_milestone')->findOne($_SESSION['ticket_edit_ajax_data']['changed']['milestone_id']);
+                }
+                catch (Exception $e)
+                {
+                    $this->error->displayJsonError(array(
+                        'title'   => _('Could not get Milestone.'),
+                        'message' => $e->getMessage(),
+                        'object'  => $e,
+                        'file'    => __FILE__,
+                        'line'    => __LINE__,
+                        'sql'     => ORM::getLastQuery(),
+                    ));
+                    return;
+                }
+
+                $_SESSION['ticket_edit_ajax_data']['changed']['milestone_name']  = $milestone->name;
+                $_SESSION['ticket_edit_ajax_data']['changed']['milestone_due']   = $milestone->due;
+            }
+        }
+        
+        // Return everything worked, and whether or not user got points
+        $json = array(
+            'status' => 'success',
+            'data'   => $_SESSION['ticket_edit_ajax_data'],
+        );
+
+        unset($_SESSION['ticket_edit_ajax_data']);
+
+        echo json_encode($json);
+
         return;
     }
 
@@ -907,7 +871,7 @@ class TicketsController extends Controller
      * 
      * @return array
      */
-    protected function getUser ()
+    private function getUser ()
     {
         $user = array();
 
@@ -963,7 +927,7 @@ class TicketsController extends Controller
      * 
      * @return string
      */
-    protected function parseComment ($comment)
+    private function parseComment ($comment)
     {
         $comment = htmlentities($comment, ENT_COMPAT, 'UTF-8');
         $comment = str_replace(array("\r\n", "\r", "\n"), "<br/>", $comment); 
@@ -980,7 +944,7 @@ class TicketsController extends Controller
      * 
      * @return array
      */
-    protected function getTicketHistory ($ticketId)
+    private function getTicketHistory ($ticketId)
     {
         $historyDetails = array();
 
@@ -1090,6 +1054,287 @@ class TicketsController extends Controller
     }
 
     /**
+     * getAssigneeMilestoneStatusLists 
+     * 
+     * Returns a list of all available assignees,
+     * milestones and statuses for the given ticket.
+     * 
+     * @param object  $ticket 
+     * @param boolean $edit 
+     * 
+     * @return array
+     */
+    private function getAssigneeMilestoneStatusLists ($ticket, $edit = true)
+    {
+        $noAssigneeClass  = 'ok';
+        $noMilestoneClass = 'ok';
+
+        if ($edit)
+        {
+            $noAssigneeLabel  = empty($ticket->assigned_id)  ? '' : _('Remove Assignee');
+            $noMilestoneLabel = empty($ticket->milestone_id) ? '' : _('Remove Milestone');
+        }
+        else
+        {
+            $noAssigneeClass  = 'remove';
+            $noAssigneeLabel  = _('Remove Assignee');
+            $noMilestoneClass = 'remove';
+            $noMilestoneLabel = _('Remove Milestone');
+        }
+
+        $assignees  = array(array('id' => 'NONE', 'label' => $noAssigneeLabel,  'class' => $noAssigneeClass));
+        $milestones = array(array('id' => 'NONE', 'label' => $noMilestoneLabel, 'class' => $noMilestoneClass));
+
+        // Get list of all users for assignee
+        $users = ORM::forTable(DB_PREFIX.'user')->findMany();
+        foreach ($users as $user)
+        {
+            $assignees[] = array(
+                'id'    => $user['id'],
+                'label' => $user['name'],
+                'class' => 'ok',
+            );
+        }
+
+        // Get list of all open milestones
+        $milestoneRecords = ORM::forTable(DB_PREFIX.'ticket_milestone')
+            ->where('complete', '0000-00-00')
+            ->findMany();
+        foreach ($milestoneRecords as $milestone)
+        {
+            $milestones[] = array(
+                'id'    => $milestone['id'],
+                'label' => $milestone['name'].' ('.$milestone['due'].')',
+                'class' => 'ok',
+            );
+        }
+
+        // get the configured ticket status class
+        $tks = \Ticket\Status::build();
+
+        // Get statuses
+        $statuses = $tks->getNextStatuses($ticket->status_id);
+
+        return array(
+            'assignees'  => $assignees,
+            'milestones' => $milestones,
+            'statuses'   => $statuses,
+        );
+    }
+
+    /**
+     * updateTicketAndHistory 
+     * 
+     * @param int   $ticketId 
+     * @param array $newTicketData 
+     * 
+     * @return boolean
+     */
+    private function updateTicketAndHistory ($ticketId, $newTicketData)
+    {
+        // Get the original ticket info
+        try
+        {
+            $ticket = ORM::forTable(DB_PREFIX.'ticket')->findOne($ticketId);
+        }
+        catch (Exception $e)
+        {
+            $this->error->add(array(
+                'title'   => _('Could not get Ticket.'),
+                'message' => $e->getMessage(),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'sql'     => ORM::getLastQuery(),
+            ));
+            return false;
+        }
+
+        if ($ticket === false)
+        {
+            $this->error->add(array(
+                'title'   => _('Could not get Ticket.'),
+                'message' => _('Invalid Ticket Id.'),
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+            ));
+            return false;
+        }
+
+        $originalTicket = $ticket->asArray();
+
+        $ticketChanged = false;
+
+        // Save the ticket history
+        try
+        {
+            $history = ORM::forTable(DB_PREFIX.'ticket_history')->create();
+
+            // only save the things that changed
+            if (isset($newTicketData['subject']) && $originalTicket['subject'] !== $newTicketData['subject'])
+            {
+                $history->subject = $originalTicket['subject'];
+                $ticketChanged    = true;
+            }
+            if (isset($newTicketData['description']) && $originalTicket['description'] !== $newTicketData['description'])
+            {
+                $history->description = $originalTicket['description'];
+                $ticketChanged        = true;
+            }
+            if (isset($newTicketData['status_id']) && $originalTicket['status_id'] !== $newTicketData['status_id'])
+            {
+                $history->status_id = $originalTicket['status_id'];
+                $ticketChanged      = true;
+            }
+            if (isset($newTicketData['assigned_id']) && $originalTicket['assigned_id'] !== $newTicketData['assigned_id'])
+            {
+                // No existing assignee
+                if (empty($originalTicket['assigned_id']))
+                {
+                    if ($newTicketData['assigned_id'] != 'NONE')
+                    {
+                        $history->assigned_id = 0;
+                        $ticketChanged        = true;
+                    }
+                }
+                // Existing assignee
+                else
+                {
+                    // We are either removing the current assignee or changing it
+                    $history->assigned_id = $originalTicket['assigned_id'];
+                    $ticketChanged        = true;
+                }
+            }
+            if (isset($newTicketData['milestone_id']) && $originalTicket['milestone_id'] !== $newTicketData['milestone_id'])
+            {
+                // No existing milestone
+                if (empty($originalTicket['milestone_id']))
+                {
+                    if ($newTicketData['milestone_id'] != 'NONE')
+                    {
+                        $history->milestone_id = 0;
+                        $ticketChanged         = true;
+                    }
+                }
+                else
+                {
+                    $history->milestone_id = $originalTicket['milestone_id'];
+                    $ticketChanged         = true;
+                }
+
+            }
+
+            if ($ticketChanged) {
+                $history->set(array(
+                    'ticket_id'    => $originalTicket['id'],
+                    'created_id'   => $originalTicket['updated_id'],  // NOTE: the logged in user didn't create the history, the previous updated_id did
+                ));
+                $history->set_expr('created', 'UTC_TIMESTAMP()');
+
+                $history->save();
+            }
+        }
+        catch (Exception $e)
+        {
+            $this->error->add(array(
+                'title'   => _('Could not update Ticket History.'),
+                'message' => $e->getMessage(),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'sql'     => ORM::getLastQuery(),
+            ));
+            return false;
+        }
+
+        $ticketChangedDetails = array();
+
+        // Save the new ticket updates
+        try
+        {
+            if (isset($newTicketData['subject']))
+            {
+                $ticket->subject = $newTicketData['subject'];
+            }
+            if (isset($newTicketData['description']))
+            {
+                $ticket->description = $newTicketData['description'];
+            }
+            if (isset($newTicketData['status_id']))
+            {
+                $ticket->status_id = $newTicketData['status_id'];
+
+                $ticketChangedDetails['status_id'] = $newTicketData['status_id'];
+            }
+
+            if (isset($newTicketData['assigned_id']) && !empty($newTicketData['assigned_id']))
+            {
+                if ($newTicketData['assigned_id'] === 'NONE')
+                {
+                    $ticket->set_expr('assigned_id', 'NULL');
+                }
+                else
+                {
+                    $ticket->assigned_id = $newTicketData['assigned_id'];
+                }
+
+                $ticketChangedDetails['assigned_id'] = $newTicketData['assigned_id'];
+            }
+            if (isset($newTicketData['milestone_id']) && !empty($newTicketData['milestone_id']))
+            {
+                if ($newTicketData['milestone_id'] === 'NONE')
+                {
+                    $ticket->set_expr('milestone_id', 'NULL');
+                }
+                else
+                {
+                    $ticket->milestone_id = $newTicketData['milestone_id'];
+                }
+
+                $ticketChangedDetails['milestone_id'] = $newTicketData['milestone_id'];
+            }
+
+            $ticket->updated_id  = $newTicketData['updated_id'];
+
+            $ticket->set_expr('updated', 'UTC_TIMESTAMP()');
+            $ticket->save();
+        }
+        catch (Exception $e)
+        {
+            $this->error->add(array(
+                'title'   => _('Could not update ticket.'),
+                'message' => $e->getMessage(),
+                'object'  => $e,
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'sql'     => ORM::getLastQuery(),
+            ));
+            return false;
+        }
+
+        $_SESSION['ticket_edit_ajax_data']['changed'] = $ticketChangedDetails;
+
+        $userActivity = new UserActivity();
+
+        if (!$userActivity->handleTicketUpdate($originalTicket, $newTicketData))
+        {
+            return false;
+        }
+
+        if ($userActivity->currentUserGotPoints)
+        {
+            $_SESSION['success'] = $userActivity->lastPointsReason;
+
+            $_SESSION['ticket_edit_ajax_data']['current_user_got_points'] = array(
+                'title' => _('Congratulations'),
+                'body'  => $userActivity->lastPointsReason,
+            );
+        }
+
+        return true;
+    }
+
+    /**
      * getProfile 
      * 
      * Returns a form validation profile.
@@ -1098,7 +1343,7 @@ class TicketsController extends Controller
      * 
      * @return array
      */
-    protected function getProfile ($name)
+    private function getProfile ($name)
     {
         $profile = array(
             'CREATE' => array(
@@ -1108,6 +1353,10 @@ class TicketsController extends Controller
                     ),
                     'description' => array(
                         'required' => 1,
+                    ),
+                    'updated_id' => array(
+                        'required' => 1,
+                        'format'   => '/^[0-9]+$/',
                     ),
                     'email' => array(
                         'format' => '/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/',
@@ -1140,6 +1389,27 @@ class TicketsController extends Controller
                     'names' => array(
                         'email'   => _('Email Address'),
                         'comment' => _('Comment')
+                    ),
+                ),
+            ),
+            'EDIT_AJAX' => array(
+                'constraints' => array(
+                    'id' => array(
+                        'required' => 1,
+                        'format'   => '/^[0-9]+$/',
+                    ),
+                    'updated_id' => array(
+                        'required' => 1,
+                        'format'   => '/^[0-9]+$/',
+                    ),
+                    'status_id' => array(
+                        'format' => '/^[0-9]+$/',
+                    ),
+                    'assignee_id' => array(
+                        'format' => '/(^[0-9]+$|^NONE$)?/',
+                    ),
+                    'milestone_id' => array(
+                        'format' => '/^([0-9]+$|^NONE$)?/',
                     ),
                 ),
             ),

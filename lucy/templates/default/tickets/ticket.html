@@ -4,7 +4,7 @@
 {{ include('nav.html') }}
 
         <div class="row">
-            <div id="ticket-main" class="col-sm-9">
+            <div id="ticket-main" data-ticket-id="{{ id }}" class="col-sm-9">
                 {% if logged_in %}<a class="btn btn-default pull-right" href="?edit={{ id }}">Edit</a>{% endif %}
 
                 {% if message|length > 0 %}
@@ -88,25 +88,73 @@
                 <ul class="list-unstyled">
                     <li>
                         <b>Status</b>
-                        <h4><span class="label" style="background-color:#{{ status_color }}">{{ status_name }}</span></h4>
+                        {% if statuses %}
+                        <div class="dropdown">
+                            <button id="edit-status" class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                <span class="glyphicon glyphicon-edit"></span>
+                            </button>
+                            <ul id="edit-status-menu" class="dropdown-menu dropdown-menu-right" aria-labelledby="edit-status">
+                                {% for s in statuses %}
+                                <li><a id="status_{{ s.id }}" href="#">{{ s.label }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        <h4><span id="status_label" class="label" style="background-color:#{{ status_color }}">{{ status_name }}</span></h4>
                     </li>
-                    {% if assignee_id %}
                     <li>
                         <b>Assigned To</b>
-                        <span>
+                        {% if assignees %}
+                        <div class="dropdown">
+                            <button id="edit-assignee" class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                <span class="glyphicon glyphicon-edit"></span>
+                            </button>
+                            <ul id="edit-assignee-menu" class="dropdown-menu dropdown-menu-right" aria-labelledby="edit-assignee">
+                                {% for a in assignees %}
+                                <li>
+                                    <a class="{{ a.class }}" id="assignee_{{ a.id }}" href="#">
+                                        <span class="glyphicon glyphicon-{{ a.class }}"></span> {{ a.label }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        <span id="assignee_label">
+                            {% if assignee_id %}
                             <a href="user.php?id={{ assignee_id }}">{{ assigned_name }}</a>
+                            {% else %}
+                            <i>no one</i>
+                            {% endif %}
                         </span>
                     </li>
-                    {% endif %}
-                    {% if milestone_id %}
                     <li>
                         <b>Milestone</b>
-                        <span>
-                            <a href="tickets.php?milestone={{ milestone_id }}">{{ milestone_name }}</a>
+                        {% if milestones %}
+                        <div class="dropdown">
+                            <button id="edit-milestone" class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                <span class="glyphicon glyphicon-edit"></span>
+                            </button>
+                            <ul id="edit-milestone-menu" class="dropdown-menu dropdown-menu-right" aria-labelledby="edit-milestone">
+                                {% for m in milestones %}
+                                <li>
+                                    <a class="{{ m.class }}" id="milestone_{{ m.id }}" href="#">
+                                        <span class="glyphicon glyphicon-{{ m.class }}"></span> {{ m.label }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        <span id="milestone_label">
+                            {% if milestone_id %}
+                            <a href="milestones.php?milestone={{ milestone_id }}">{{ milestone_name }}</a>
                             ({{ milestone_due }})
+                            {% else %}
+                            <i>none</i>
+                            {% endif %}
                         </span>
                     </li>
-                    {% endif %}
                     <li>
                         <b>Updated</b>
                         <span>{{ updated }}</span>

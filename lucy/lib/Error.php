@@ -111,6 +111,66 @@ class Error
     }
 
     /**
+     * displayJsonError 
+     * 
+     * Prints out the error(s) in JSON.
+     * Also allows you to add a new error, then print errors.
+     * 
+     * @param null|array $params
+     * 
+     * @return null
+     */
+    public function displayJsonError ($params = null)
+    {
+        if (is_array($params))
+        {
+            $this->add($params);
+        }
+
+        if (!$this->hasError())
+        {
+            return;
+        }
+
+        $return = array(
+            'status' => 'error',
+            'data'   => array(),
+        );
+
+        foreach ($this->errorList as $error)
+        {
+            $errorsToDisplay = array(
+                'title'   => $error['title'],
+                'message' => $error['message'],
+            );
+
+            if (defined('DEBUG') && DEBUG)
+            {
+                if (isset($error['object']))
+                {
+                    $errorsToDisplay['object'] = print_r($error['object']);
+                }
+
+                $errorsToDisplay['file'] = $error['file'];
+                $errorsToDisplay['line'] = $error['line'];
+
+                if (isset($error['sql']))
+                {
+                    $errorsToDisplay['sql'] = $error['sql'];
+                }
+
+                $errorsToDisplay['php_version'] = PHP_VERSION;
+                $errorsToDisplay['php_os']      = PHP_OS;
+            }
+
+            $return['data'] = $errorsToDisplay;
+        }
+
+        echo json_encode($return);
+        return;
+    }
+
+    /**
      * add
      * 
      * Adds the error to the error list.

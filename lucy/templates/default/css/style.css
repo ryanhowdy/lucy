@@ -207,6 +207,10 @@ a.cancel {
 #ticket-details > ul > li > b {
   display: block;
 }
+#ticket-details > ul > li > .dropdown {
+  float: right;
+  margin-top: -21px;
+}
 #new-ticket #description,
 #edit-ticket #description {
   height: 250px;
