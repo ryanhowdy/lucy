@@ -170,6 +170,9 @@ class FormValidator
      */
     public function getJsValidation ($profile)
     {
+        // TODO - need a js script to handle this
+        return;
+
         $js  = "\n";
         $js .= '<script type="text/javascript" src="ui/js/livevalidation.js"></script>';
         $js .= '<script type="text/javascript">';
@@ -276,8 +279,8 @@ class FormValidator
      * or false if no message is found.
      * 
      * @param array  $profile 
-     * @param string  $fieldName 
-     * @param string $option 
+     * @param string $fieldName 
+     * @param string $contraintName
      * 
      * @return boolean/string
      */
