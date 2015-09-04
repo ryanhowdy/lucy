@@ -8,11 +8,15 @@
  * @author    Ryan Haudenschilt <r.haudenschilt@gmail.com> 
  * @license   http://www.gnu.org/licenses/gpl-2.0.html
  */
-class Page
+abstract class Page
 {
-    private $error;
+    protected $error;
+    protected $user;
+
     private $currentPage;
     private $pageLkup;
+
+    abstract public function run();
 
     /**
      * Constructor
@@ -22,7 +26,23 @@ class Page
      */
     public function __construct ($currentPage)
     {
+        // Ensure that the site has been installed first
+        if (!file_exists('config.php'))
+        {
+            $_SESSION['no-config-redirect'] = 1;
+            header("Location: install.php");
+            return;
+        }
+
+        require_once 'config.php';
+
+        ORM::configure(DB_CONNECTION);
+        ORM::configure('username', DB_USERNAME);
+        ORM::configure('password', DB_PASSWORD);
+        ORM::configure('logging', true);
+
         $this->error = Error::getInstance();
+        $this->user  = new User();
 
         $this->currentPage = $currentPage;
 
@@ -43,7 +63,7 @@ class Page
      * 
      * @return null|boolean
      */
-    public function displayHeader ($templateOptions = array())
+    protected function displayHeader ($templateOptions = array())
     {
         $javaScriptIncludes = isset($templateOptions['js_includes'])  ? $templateOptions['js_includes']  : '';
         $javaScriptCode     = isset($templateOptions['js_code'])      ? $templateOptions['js_code']      : '';
@@ -117,7 +137,7 @@ class Page
      * 
      * @return boolean
      */
-    public function displayFooter ()
+    protected function displayFooter ()
     {
         $this->displayTemplate('global', 'footer', array('year' => gmdate('Y')));
         if ($this->error->hasError())
@@ -137,7 +157,7 @@ class Page
      * 
      * @return void
      */
-    public function displayMustBeLoggedIn ()
+    protected function displayMustBeLoggedIn ()
     {
         $this->displayTemplate('global', 'must_be_logged_in');
         return;
@@ -154,7 +174,7 @@ class Page
      * 
      * @return void
      */
-    public function displayTemplate ($directory, $name, $params = array())
+    protected function displayTemplate ($directory, $name, $params = array())
     {
         $directory = basename($directory);
 

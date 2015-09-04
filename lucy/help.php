@@ -5,18 +5,15 @@ session_start();
 require_once __DIR__.'/vendor/autoload.php';
 
 /**
- * HelpController 
+ * HelpPage
  * 
  * @package   Lucy
  * @copyright 2014 Haudenschilt LLC
  * @author    Ryan Haudenschilt <r.haudenschilt@gmail.com> 
  * @license   http://www.gnu.org/licenses/gpl-2.0.html
  */
-class HelpController extends Controller
+class HelpPage extends Page
 {
-    private $error;
-    private $user;
-
     /**
      * run 
      * 
@@ -39,33 +36,21 @@ class HelpController extends Controller
      */
     function displayHelp ()
     {
-        $page = new Page('help');
+        $this->displayHeader();
 
-        $page->displayHeader();
+        $this->displayTemplate('home', 'help');
         if ($this->error->hasError())
         {
             $this->error->displayError();
             return;
         }
 
-        $page->displayTemplate('home', 'help');
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
-
-        $page->displayFooter();
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
+        $this->displayFooter();
 
         return;
     }
 }
 
-$control = new HelpController();
+$control = new HelpPage('help');
 $control->run();
 exit();

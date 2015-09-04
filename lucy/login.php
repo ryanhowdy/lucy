@@ -5,18 +5,15 @@ session_start();
 require_once __DIR__.'/vendor/autoload.php';
 
 /**
- * LoginController 
+ * LoginPage
  * 
  * @package   Lucy
  * @copyright 2015 Haudenschilt LLC
  * @author    Ryan Haudenschilt <r.haudenschilt@gmail.com> 
  * @license   http://www.gnu.org/licenses/gpl-2.0.html
  */
-class LoginController extends Controller
+class LoginPage extends Page
 {
-    private $error;
-    private $user;
-
     /**
      * run 
      * 
@@ -45,9 +42,7 @@ class LoginController extends Controller
      */
     function displayLogin ($error = '')
     {
-        $page = new Page('login');
-
-        $page->displayHeader();
+        $this->displayHeader();
         if ($this->error->hasError())
         {
             $this->error->displayError();
@@ -66,14 +61,14 @@ class LoginController extends Controller
             $params['logged_in'] = $this->user->name;
         }
 
-        $page->displayTemplate('home', 'login', $params);
+        $this->displayTemplate('home', 'login', $params);
         if ($this->error->hasError())
         {
             $this->error->displayError();
             return;
         }
 
-        $page->displayFooter();
+        $this->displayFooter();
         if ($this->error->hasError())
         {
             $this->error->displayError();
@@ -157,6 +152,6 @@ class LoginController extends Controller
     }
 }
 
-$control = new LoginController();
+$control = new LoginPage('login');
 $control->run();
 exit();

@@ -5,18 +5,15 @@ session_start();
 require_once __DIR__.'/vendor/autoload.php';
 
 /**
- * TicketsController 
+ * TicketsPage
  * 
  * @package   Lucy
  * @copyright 2015 Haudenschilt LLC
  * @author    Ryan Haudenschilt <r.haudenschilt@gmail.com> 
  * @license   http://www.gnu.org/licenses/gpl-2.0.html
  */
-class TicketsController extends Controller
+class TicketsPage extends Page
 {
-    private $error;
-    private $user;
-
     /**
      * run 
      * 
@@ -24,9 +21,6 @@ class TicketsController extends Controller
      */
     public function run ()
     {
-        $this->error = Error::getInstance();
-        $this->user  = new User();
-
         if (isset($_GET['new']))
         {
             if (isset($_POST['submit']))
@@ -85,9 +79,7 @@ class TicketsController extends Controller
      */
     protected function displayTickets ()
     {
-        $page = new Page('tickets');
-
-        $page->displayHeader();
+        $this->displayHeader();
 
         // Get the open/closed status ids
         $tks = \Ticket\Status::build();
@@ -130,7 +122,7 @@ class TicketsController extends Controller
                 'line'    => __LINE__,
                 'sql'     => ORM::getLastQuery(),
             ));
-            $page->displayFooter();
+            $this->displayFooter();
             return;
         }
 
@@ -170,14 +162,14 @@ class TicketsController extends Controller
             $params['closed_class'] = 'active';
         }
 
-        $page->displayTemplate('tickets', 'main', $params);
+        $this->displayTemplate('tickets', 'main', $params);
         if ($this->error->hasError())
         {
             $this->error->displayError();
             return;
         }
 
-        $page->displayFooter();
+        $this->displayFooter();
 
         return;
     }
@@ -191,9 +183,7 @@ class TicketsController extends Controller
      */
     protected function displayTicketCreate ()
     {
-        $page = new Page('tickets');
-
-        $page->displayHeader();
+        $this->displayHeader();
 
         // Get any previous form errors
         $formErrors = array();
@@ -250,14 +240,14 @@ class TicketsController extends Controller
         $params['assignees']  = $assignees;
         $params['milestones'] = $milestones;
 
-        $page->displayTemplate('tickets', $templateName, $params);
+        $this->displayTemplate('tickets', $templateName, $params);
         if ($this->error->hasError())
         {
             $this->error->displayError();
             return;
         }
 
-        $page->displayFooter();
+        $this->displayFooter();
 
         if (isset($_SESSION['form_errors']))
         {
@@ -357,8 +347,6 @@ class TicketsController extends Controller
      */
     protected function displayTicket ()
     {
-        $page = new Page('tickets');
-
         $validator = new FormValidator();
 
         $message        = array();
@@ -404,7 +392,7 @@ class TicketsController extends Controller
         }
         catch (Exception $e)
         {
-            $page->displayHeader();
+            $this->displayHeader();
             $this->error->displayError(array(
                 'title'   => _('Could not get Ticket.'),
                 'message' => $e->getMessage(),
@@ -413,7 +401,7 @@ class TicketsController extends Controller
                 'line'    => __LINE__,
                 'sql'     => ORM::getLastQuery(),
             ));
-            $page->displayFooter();
+            $this->displayFooter();
             return;
         }
 
@@ -441,7 +429,7 @@ class TicketsController extends Controller
         }
         catch (Exception $e)
         {
-            $page->displayHeader();
+            $this->displayHeader();
             $this->error->displayError(array(
                 'title'   => _('Could not get Ticket Comments.'), 
                 'message' => $e->getMessage(),
@@ -450,7 +438,7 @@ class TicketsController extends Controller
                 'line'    => __LINE__,
                 'sql'     => ORM::getLastQuery(),
             ));
-            $page->displayFooter();
+            $this->displayFooter();
             return;
         }
 
@@ -509,18 +497,18 @@ class TicketsController extends Controller
             $params['statuses']   = $lists['statuses'];
         }
 
-        $page->displayHeader(array(
+        $this->displayHeader(array(
             'js_code' => $validator->getJsValidation($this->getProfile('COMMENT')),
         ));
 
-        $page->displayTemplate('tickets', 'ticket', $params);
+        $this->displayTemplate('tickets', 'ticket', $params);
         if ($this->error->hasError())
         {
             $this->error->displayError();
             return;
         }
 
-        $page->displayFooter();
+        $this->displayFooter();
 
         if (isset($_SESSION['success']))
         {
@@ -587,13 +575,11 @@ class TicketsController extends Controller
      */
     protected function displayTicketEdit ()
     {
-        $page = new Page('tickets');
-
-        $page->displayHeader();
+        $this->displayHeader();
 
         if (!$this->user->isLoggedIn())
         {
-            $page->displayMustBeLoggedIn();
+            $this->displayMustBeLoggedIn();
             return;
         }
 
@@ -633,7 +619,7 @@ class TicketsController extends Controller
                 'line'    => __LINE__,
                 'sql'     => ORM::getLastQuery(),
             ));
-            $page->displayFooter();
+            $this->displayFooter();
             return;
         }
 
@@ -657,14 +643,14 @@ class TicketsController extends Controller
             ),
         );
 
-        $page->displayTemplate('tickets', 'edit', $params);
+        $this->displayTemplate('tickets', 'edit', $params);
         if ($this->error->hasError())
         {
             $this->error->displayError();
             return;
         }
 
-        $page->displayFooter();
+        $this->displayFooter();
 
         if (isset($_SESSION['form_errors']))
         {
@@ -681,8 +667,6 @@ class TicketsController extends Controller
      */
     protected function displayTicketEditSubmit ()
     {
-        $page = new Page('tickets');
-
         $validator = new FormValidator();
 
         $errors = $validator->validate($_POST, $this->getProfile('CREATE'));
@@ -694,7 +678,7 @@ class TicketsController extends Controller
 
         if (!$this->user->isLoggedIn())
         {
-            $page->displayMustBeLoggedIn();
+            $this->displayMustBeLoggedIn();
             return;
         }
 
@@ -706,9 +690,9 @@ class TicketsController extends Controller
         // Update the ticket and history
         if (!$this->updateTicketAndHistory($_GET['edit'], $_POST))
         {
-            $page->displayHeader();
+            $this->displayHeader();
             $this->error->displayError();
-            $page->displayFooter();
+            $this->displayFooter();
             return;
         }
 
@@ -1428,6 +1412,6 @@ class TicketsController extends Controller
     }
 }
 
-$control = new TicketsController();
+$control = new TicketsPage('tickets');
 $control->run();
 exit();

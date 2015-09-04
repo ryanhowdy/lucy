@@ -5,18 +5,15 @@ session_start();
 require_once __DIR__.'/vendor/autoload.php';
 
 /**
- * UserController 
+ * UserPage
  * 
  * @package   Lucy
  * @copyright 2015 Haudenschilt LLC
  * @author    Ryan Haudenschilt <r.haudenschilt@gmail.com> 
  * @license   http://www.gnu.org/licenses/gpl-2.0.html
  */
-class UserController extends Controller
+class UserPage extends Page
 {
-    private $error;
-    private $user;
-
     /**
      * run 
      * 
@@ -39,37 +36,13 @@ class UserController extends Controller
      */
     function displayUser ()
     {
-        $page = new Page('user');
-
-        $page->displayHeader();
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
+        $this->displayHeader();
 
         $userId = $this->user->id;
 
         if (isset($_GET['id']))
         {
             $userId = $_GET['id'];
-        }
-
-        try
-        {
-            $db = ORM::get_db();
-        }
-        catch (Exception $e)
-        {
-            $this->error->add(array(
-                'title'   => _('Database Error.'),
-                'message' => _('Could not connect to database.'),
-                'object'  => $e,
-                'file'    => __FILE__,
-                'line'    => __LINE__,
-            ));
-
-            return false;
         }
 
         $user = ORM::forTable(DB_PREFIX.'user')->findOne($userId);
@@ -83,24 +56,19 @@ class UserController extends Controller
         $params['joindate']   = $params['created'];
         $params['activities'] = $activity;
 
-        $page->displayTemplate('home', 'user', $params);
+        $this->displayTemplate('home', 'user', $params);
         if ($this->error->hasError())
         {
             $this->error->displayError();
             return;
         }
 
-        $page->displayFooter();
-        if ($this->error->hasError())
-        {
-            $this->error->displayError();
-            return;
-        }
+        $this->displayFooter();
 
         return;
     }
 }
 
-$control = new UserController();
+$control = new UserPage('user');
 $control->run();
 exit();

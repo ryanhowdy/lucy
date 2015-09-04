@@ -6,19 +6,19 @@ require_once __DIR__.'/vendor/autoload.php';
 
 define('INSTALL_TEMPLATE', __DIR__.'/templates/install');
 
-$control = new InstallController();
+$control = new InstallPage();
 $control->run();
 exit();
 
 /**
- * InstallController 
+ * InstallPage
  * 
  * @package   Lucy
  * @copyright 2015 Haudenschilt LLC
  * @author    Ryan Haudenschilt <r.haudenschilt@gmail.com> 
  * @license   http://www.gnu.org/licenses/gpl-2.0.html
  */
-class InstallController
+class InstallPage
 {
     /**
      * run 
