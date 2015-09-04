@@ -466,7 +466,7 @@ class TicketsController extends Controller
         }
 
         // Get Ticket update History
-        $historyDetails = $this->getTicketHistory($_GET['ticket']);
+        $historyDetails = $this->getTicketHistory($_GET['ticket'], $ticket);
 
         // Combine the comments with the history
         $commentsAndHistory = array_merge($comments, $historyDetails);
@@ -940,11 +940,12 @@ class TicketsController extends Controller
      * 
      * Will get the ticket history information details for a given ticket id.
      * 
-     * @param int $ticketId 
+     * @param int    $ticketId 
+     * @param object $ticket   an ORM object representing the current ticket
      * 
      * @return array
      */
-    private function getTicketHistory ($ticketId)
+    private function getTicketHistory ($ticketId, $ticket)
     {
         $historyDetails = array();
 
@@ -1018,10 +1019,17 @@ class TicketsController extends Controller
             }
             if (!is_null($h['assigned_id']))
             {
-                $to = '<a href="user.php?id='.$prevAssignedId.'">'.$prevAssignedName.'</a>';
+                $to   = '<a href="user.php?id='.$prevAssignedId.'">'.$prevAssignedName.'</a>';
+                $desc = sprintf(_("Assigned to %s"), $to);
+
+                if (is_null($prevAssignedId))
+                {
+                    $to   = '<a href="user.php?id='.$h['assigned_id'].'">'.$h['assigned_name'].'</a>';
+                    $desc = sprintf(_("Unassigned %s"), $to);
+                }
 
                 $details['comment']  = '<span class="glyphicon glyphicon-user"></span> ';
-                $details['comment'] .= sprintf(_("Assigned to %s"), $to);
+                $details['comment'] .= $desc;
                 $details['comment'] .= ' <small>'.$h['created'].'</small>';
 
                 $historyDetails[] = $details;
@@ -1033,6 +1041,7 @@ class TicketsController extends Controller
             {
                 $to   = '<a href="milestone.php?milestone='.$prevMilestoneId.'">'.$prevMilestoneName.'</a>';
                 $desc = sprintf(_("Added to %s milestone"), $to);
+
                 if (is_null($prevMilestoneId))
                 {
                     $to   = '<a href="milestone.php?milestone='.$h['milestone_id'].'">'.$h['milestone_name'].'</a>';
