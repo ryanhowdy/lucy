@@ -252,6 +252,16 @@ td.status > h4 > .label {
 .notification-icon .zero {
   display: none;
 }
+#milestone-listing td.percent {
+  padding-top: 20px;
+  width: 40%;
+}
+#milestone-listing td.percent div.progress {
+  height: 50px;
+}
+#milestone-listing td.percent div.progress .progress-bar {
+  padding-top: 12px;
+}
 #user-sidebar {
   text-align: center;
 }

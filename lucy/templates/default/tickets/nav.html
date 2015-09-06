@@ -1,10 +1,10 @@
 
         <p class="pull-right">
-            <a href="tickets.php?new" class="btn btn-primary">New Ticket</a>
+            <a href="tickets.php?new" class="btn btn-primary">{{ navigation.new_ticket_link }}</a>
         </p>
 
         <ul class="nav nav-tabs">
-            <li role="presentation" class="active"><a href="tickets.php">Tickets</a></li>
-            <li role="presentation"><a href="milestones.php">Milestones</a></li>
+            <li role="presentation" class="{{ navigation.ticket_class }}"><a href="tickets.php">{{ navigation.ticket_link }}</a></li>
+            <li role="presentation" class="{{ navigation.milestone_class }}"><a href="milestones.php">{{ navigation.milestone_link }}</a></li>
         </ul>
 

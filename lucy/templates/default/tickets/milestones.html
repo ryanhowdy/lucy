@@ -1,0 +1,49 @@
+
+    <div class="container-fluid main-container">
+
+{{ include('nav.html') }}
+
+    {% if milestones|length > 0 %}
+        <div class="table-responsive">
+            <table id="milestone-listing" class="table">
+                <thead>
+                    <tr>
+                        <th colspan="3">Milestone</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for milestone in milestones %}
+                    <tr>
+                        <td class="name">
+                            <h2><a href="milestones.php?milestone={{ milestone.id }}">{{ milestone.name }}</a></h2>
+                            <p>{{ milestone.due }}</p>
+                            <p>{{ milestone.description }}</p>
+                        </td>
+                        <td class="percent">
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-success" role="progressbar" 
+                                    style="width: {{ milestone.percent_complete }}%;">
+                                    {{ milestone.percent_complete }}%
+                                </div>
+                            </div>
+                            <ul class="list-inline">
+                                <li><a href="#">{{ milestone.total_tickets_link }}</a></li>
+                                <li><a href="#">{{ milestone.opened_tickets_link }}</a></li>
+                                <li><a href="#">{{ milestone.closed_tickets_link }}</a></li>
+                            </ul>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div><!--/.table-responsive-->
+    {% else %}
+        <div class="blank-state">
+            <p><b>No Milestones, yet</b></p>
+            <p>No one has added any tickets yet, feel free to be the first.</p>
+            <a href="?new" class="btn btn-primary">{{ new_label }}</a>
+        </div>
+    {% endif %}
+
+    </div> <!--/.container-fluid .main-container-->
+

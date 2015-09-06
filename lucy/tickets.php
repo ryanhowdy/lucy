@@ -148,7 +148,12 @@ class TicketsPage extends Page
         }
 
         $params = array(
-            'new_label' => _('New Ticket'),
+            'navigation' => array(
+                'new_ticket_link' => _('New Ticket'),
+                'ticket_class'    => 'active',
+                'ticket_link'     => _('Tickets'),
+                'milestone_link'  => _('Milestones'),
+            ),
             'authors'   => $authors,
             'tickets'   => $tickets,
         );
@@ -465,6 +470,12 @@ class TicketsPage extends Page
         });
 
         $params = array(
+            'navigation' => array(
+                'new_ticket_link' => _('New Ticket'),
+                'ticket_class'    => 'active',
+                'ticket_link'     => _('Tickets'),
+                'milestone_link'  => _('Milestones'),
+            ),
             'id'              => $ticket->id,
             'subject'         => $ticket->subject,
             'created_header'  => $createdHeader,

@@ -52,6 +52,7 @@ abstract class Page
             'login'       => _('Login'),
             'help'        => _('Help'),
             'tickets'     => _('Tickets'),
+            'milestones'  => _('Milestones'),
             'discussions' => _('Discussions'),
         );
     }
@@ -208,10 +209,21 @@ abstract class Page
 
             foreach (ORM::forTable(DB_PREFIX.'module')->orderByAsc('order')->findResultSet() as $module)
             {
+                $status = $this->currentPage == $module->code ? 'active' : '';
+
+                // Tickets/Milestones are special, share a page
+                if (in_array($this->currentPage, array('tickets', 'milestones')))
+                {
+                    if (in_array($module->code, array('tickets', 'milestones')))
+                    {
+                        $status = 'active';
+                    }
+                }
+
                 $links[] = array(
                     'name'   => _($module->name),
                     'url'    => $module->code . '.php',
-                    'status' => ($this->currentPage == $module->code ? 'active' : ''),
+                    'status' => $status,
                 );
             }
         }
